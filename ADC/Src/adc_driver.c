@@ -18,46 +18,104 @@
 
 #include "adc_driver.h"
 
-/* Private Variables-------------------------------------------------------  */
-ADC_ChannelsTypeDef    cadc;
-ADC_BufferTypeDef 	   badc;
+// Private variables
+// Container of ADC ranks to return rank's register while number of rank is given
+static 			uint32_t ADC_RANKS_REGS[16] = {
+    ADC_RANK1_REG, ADC_RANK2_REG, ADC_RANK3_REG, ADC_RANK4_REG,
+    ADC_RANK5_REG, ADC_RANK6_REG, ADC_RANK7_REG, ADC_RANK8_REG,
+    ADC_RANK9_REG, ADC_RANK10_REG, ADC_RANK11_REG, ADC_RANK12_REG,
+    ADC_RANK13_REG, ADC_RANK14_REG, ADC_RANK15_REG, ADC_RANK16_REG
+};
+
+// Container of ADC ranks bit position to return provide correct flow of bit shifting
+static 			uint32_t ADC_RANKS_BITPOS[16] = {
+    ADC_RANK1_BITPOS, ADC_RANK2_BITPOS, ADC_RANK3_BITPOS, ADC_RANK4_BITPOS,
+    ADC_RANK5_BITPOS, ADC_RANK6_BITPOS, ADC_RANK7_BITPOS, ADC_RANK8_BITPOS,
+    ADC_RANK9_BITPOS, ADC_RANK10_BITPOS, ADC_RANK11_BITPOS, ADC_RANK12_BITPOS,
+    ADC_RANK13_BITPOS, ADC_RANK14_BITPOS, ADC_RANK15_BITPOS, ADC_RANK16_BITPOS
+};
+
 /**
   * @brief ADC1 Initialization Function, does calibration
   * @param  hadc   - pointer to ADC handle
   * @retval status - HAL status
   */
-HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc){
+ADC_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc, ADC_ChannelsTypeDef* cadc){
 
-	// check if ADC is not started
-	if(__ADC_IS_CONV_STARTED(hadc) == 0){
-		HAL_ADC_Start(hadc);
-	}
-
-	// check if dma is enabled
-	if(__ADC_DMA_MODE(hadc) != 0){
-
-		// check if multimode is enabled
-		if(__ADC_MULTIMODE_IS_ENABLED(hadc) != 0){
-
-			// starting DMA with ADC in dual mode
-			if(HAL_ADCEx_MultiModeStart_DMA(hadc, badc.ddma.BufferMultiMode, ADC_CONVERTED_CHANNELS) != HAL_OK){
-				return ADC_Error;
-			}
-
-		}else{
-
-			// starting DMA with ADC in Independent mode
-			if(HAL_ADC_Start_DMA(hadc, (uint32_t*)badc.idma.BufferADC, ADC_CONVERTED_CHANNELS) != HAL_OK){
-				return ADC_Error;
-			}
-
+	// check if ADC is started to be stop to calibrate ADC
+	if(__ADC_IS_CONV_STARTED(hadc) != 0){
+		if(HAL_ADC_Stop(hadc) != HAL_OK){
+			return ADC_Error;
 		}
-
 	}
+
+	// check if DMA is enabled
+
+		// check if dual mode is enabled
+	if(__ADC_IS_DMA_MULTIMODE(hadc) == 0){
+
+
+			if(__ADC_IS_DMA_ENABLED(hadc) != 0){
+
+				// starting DMA with ADC in Independent mode
+				if(HAL_ADC_Start_DMA(hadc, (uint32_t*)badc->idma.BufferADC, ADC_BUFF_SIZE) != HAL_OK){
+					return ADC_Error;
+				}
+			}
+	}
+
 
 	// launching calibration
-	return HAL_ADCEx_Calibration_Start(hadc);
+	if(HAL_ADCEx_Calibration_Start(hadc) != HAL_OK){
+		return ADC_Error;
+	}
+
+	// launching ADC
+	if(HAL_ADC_Start(hadc) != HAL_OK){
+		return ADC_Error;
+	}
+
+	// getting ranks config
+	if(ADC_Config_GetRanksOfChannels(hadc, cadc, badc)!= ADC_OK){
+		return ADC_Error;
+	}
+
+	return ADC_OK;
 }
+
+
+/**
+  * @brief ADC Init function, initialize ADC in dual mode | Should be called in init function of slave ADC
+  * @param  hadc    - pointer to ADC Masterhandle
+  * @param  retval  - pointer to variable, whose contains return value
+  * @retval status  - HAL status if init went successfully
+  */
+ADC_StatusTypeDef ADC_Init_Multimode(ADC_HandleTypeDef* hadcMaster, ADC_BufferTypeDef* badc){
+
+	// checking if correct param was provide
+	if(hadcMaster->Instance != ADC1){
+		return ADC_Error;
+	}
+	// checking if buff struct is initialized
+	if(badc == NULL){
+		return ADC_Error;
+	}
+
+	// starting calibration
+	if(HAL_ADCEx_Calibration_Start(hadcMaster) != HAL_OK){
+		return ADC_Error;
+	}
+
+	// launching dual mode conversion
+	if(HAL_ADCEx_MultiModeStart_DMA(hadcMaster, badc->ddma.BufferMultiMode, ADC_BUFF_SIZE) != HAL_OK){
+		return ADC_Error;
+	}
+
+
+	return ADC_OK;
+
+}
+
 
 /**
   * @brief ADC Reading channel function
@@ -66,55 +124,62 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc){
   * @param  retval  - pointer to variable, whose contains return value
   * @retval status  - HAL status if Reading channel went successfully
   */
-ADC_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, uint8_t channel, uint16_t*  retval){
+ADC_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsTypeDef* cadc, ADC_BufferTypeDef* badc, uint8_t channel, uint16_t*  retval){
 
-	ADC_StatusTypeDef status;
+
 
 	if(__ADC_IS_CONV_STARTED(hadc) == 0){ // ADC not started
 		return ADC_NotStarted;
 	}
+
 	if(channel < 0 || channel > 16){
 		return ADC_Error;
 	}
 
 	uint8_t rank  = 0;
 
-	if(ADC_GetRank(&cadc, channel, &rank) != ADC_OK){
+	if(ADC_GetRank(cadc, channel, &rank) != ADC_OK){
 		return ADC_Error;
 	}
 
 
 	if(__ADC_IS_DMA_ENABLED(hadc) == 0){  // DMA Disabled
 
-
 		for(int i  = 0 ; i <= rank ; ++i){
 			 if(__ADC_IS_DMA_MULTIMODE(hadc) == 0){  // single conversion | independent mode
-				 badc.ADC_Buff[channel]          = HAL_ADC_GetValue(hadc);
+				 badc->ADC_Buff[rank]             = HAL_ADC_GetValue(hadc);
 
 			}else{									 // single conversion | dual mode
-				 badc.ddma.BufferMultiMode[rank] = HAL_ADCEx_MultiModeGetValue(hadc);
+				 badc->ddma.BufferMultiMode[rank] = HAL_ADCEx_MultiModeGetValue(hadc);
 			}
 		}
 
-		if(badc.ADC_Buff[channel] > __ADC_RESOLUTION(hadc) || badc.ADC_Buff[channel] < 0){
+		if(badc->ADC_Buff[channel] > __ADC_RESOLUTION(hadc) || badc->ADC_Buff[channel] < 0){
 			return  ADC_Error;
 		}
 
-		status =  ADC_OK;
+		//overwriting converted value of ADC | otherwise no assign of value will be conducted
+		*(retval) = badc->ADC_Buff[rank];
+
+		if(__ADC_MODE(hadc) == 0){
+			if(HAL_ADC_Start(hadc) != HAL_OK){
+				return ADC_Error;
+			}
+		}
 
 	}else{								  // DMA Enabled
 
 
-		if(ADC_Averaging(hadc, &badc, channel, retval) != ADC_OK){ // averaging transfer
+		if(ADC_Averaging(hadc, badc, cadc, channel, retval) != ADC_OK){ // averaging transfer
 			return ADC_Error;
 		}
 
 
-		if(__ADC_MULTIMODE_IS_ENABLED(hadc) != 0){ // ADC in dual mode | DMA [ON]
+		if(__ADC_IS_DMA_MULTIMODE(hadc) != 0){ // ADC in dual mode | DMA [ON]
 
 
 			if(__ADC_DMA_MODE(hadc) == 0){
-				if(HAL_ADCEx_MultiModeStart_DMA(hadc, badc.ddma.BufferMultiMode, ADC_CONVERTED_CHANNELS) != HAL_OK){
+				if(HAL_ADCEx_MultiModeStart_DMA(hadc, badc->ddma.BufferMultiMode, ADC_BUFF_SIZE) != HAL_OK){
 					return ADC_Error;
 				}
 			}
@@ -122,8 +187,8 @@ ADC_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, uint8_t channel, uint
 		}else{									   // ADC in independent mode | DMA [ON]
 
 
-			if(__ADC_DMA_MODE(hadc) == 0){
-				if(HAL_ADC_Start_DMA(hadc, (uint32_t*)badc.idma.BufferADC, ADC_CONVERTED_CHANNELS) != HAL_OK){
+			if(__ADC_DMA_MODE(hadc) != 0){
+				if(HAL_ADC_Start_DMA(hadc, (uint32_t*)badc->idma.BufferADC, ADC_BUFF_SIZE) != HAL_OK){
 					return ADC_Error;
 				}
 			}
@@ -133,7 +198,7 @@ ADC_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, uint8_t channel, uint
 	}
 
 
-	return status;
+	return ADC_OK;
 }
 
 /**
@@ -144,20 +209,22 @@ ADC_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, uint8_t channel, uint
   * @param  retval  - pointer to variable, whose contains return value
   * @retval status  - HAL status if Reading channel went successfully
   */
-__weak ADC_StatusTypeDef  ADC_GetValue(ADC_HandleTypeDef* hadc, float max, uint8_t channel, float * retval){
-	uint16_t binary_value = 0;
+__weak ADC_StatusTypeDef  ADC_GetValue(ADC_HandleTypeDef* hadc, ADC_ChannelsTypeDef* cadc, ADC_BufferTypeDef* badc, float max, uint8_t channel, float * retval){
+
+	uint16_t binary_type = 0;
 	uint32_t adc_resolutiion = __ADC_RESOLUTION(hadc);
 
-	if(ADC_ReadChannel(hadc, channel, &binary_value) != ADC_OK){
+	if(ADC_ReadChannel(hadc, cadc, badc, channel, &binary_type) != ADC_OK){
 		return ADC_Error;
 	}
 
-	*retval = (float)binary_value / (float)adc_resolutiion * max;
+	*retval = max * ((float)(float)binary_type / (float)adc_resolutiion);
 
 
 	return ADC_OK;
 
 }
+
 
 /*
  * @brief Empty implementation of callback function | If body of this function should does some functionalities, then implementation is required
@@ -173,7 +240,7 @@ void               HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc){
   * @param  hadc    - pointer to ADC handle
   * @retval status  - ADC status
   */
-ADC_StatusTypeDef  ADC_Config_GetRanksOfChannels(ADC_HandleTypeDef* hadc){
+ADC_StatusTypeDef  ADC_Config_GetRanksOfChannels(ADC_HandleTypeDef* hadc, ADC_ChannelsTypeDef* cadc, ADC_BufferTypeDef* badc){
 
 	uint32_t numberOfConversions = ((hadc->Instance->SQR1 >> 20) & 0xF) + 1;
 
@@ -185,19 +252,47 @@ ADC_StatusTypeDef  ADC_Config_GetRanksOfChannels(ADC_HandleTypeDef* hadc){
 
 	ADC_CONVERTED_CHANNELS = numberOfConversions;
 
+
 	for(int i = 0; i < numberOfConversions; ++i){
 
-		if(i > 6 && i < 13){
-			cadc.channels[i] = ((hadc->Instance->SQR1 >> (5 * (i - 6))) & 0x1F);
-		}else if(i > 12){
-			cadc.channels[i] = ((hadc->Instance->SQR2 >> (5 * (i - 2 * 6))) & 0x1F);
-		}else{
-			cadc.channels[i] = ((hadc->Instance->SQR3 >> (5 * i)) & 0x1F);
-		}
+			#if defined(ADC_SQR4_SQ15_Pos)
 
-		if(cadc.channels[i] > 16 || cadc.channels[i] < 0){
-			return ADC_Error;
-		}
+				switch(ADC_RANKS_REGS[i]11){
+						case SQR_1:
+							cadc->ranks[i] = ((hadc->Instance->SQR1 >> ADC_RANKS_BITPOS[i]) & 0xf);
+							break;
+						case SQR_2:
+							cadc->ranks[i] = ((hadc->Instance->SQR2 >> ADC_RANKS_BITPOS[i]) & 0xf);
+							break;
+						case SQR_3:
+							cadc->ranks[i] = ((hadc->Instance->SQR3 >> ADC_RANKS_BITPOS[i]) & 0xf);
+							break;
+						case SQR_4:
+							cadc->ranks[i] = ((hadc->Instance->SQR4 >> ADC_RANKS_BITPOS[i]) & 0xf);
+							break;
+						default:
+							break;
+					}
+
+
+			#else
+
+				switch(ADC_RANKS_REGS[i]){
+					case SQR_1:
+						cadc->ranks[i] = ((hadc->Instance->SQR1 >> ADC_RANKS_BITPOS[i]) & 0xf);
+						break;
+					case SQR_2:
+						cadc->ranks[i] = ((hadc->Instance->SQR2 >> ADC_RANKS_BITPOS[i]) & 0xf);
+						break;
+					case SQR_3:
+						cadc->ranks[i] = ((hadc->Instance->SQR3 >> ADC_RANKS_BITPOS[i]) & 0xf);
+						break;
+					default:
+						break;
+				}
+
+			#endif
+
 
 	}
 
@@ -212,13 +307,14 @@ ADC_StatusTypeDef  ADC_Config_GetRanksOfChannels(ADC_HandleTypeDef* hadc){
 ADC_StatusTypeDef  ADC_GetRank(ADC_ChannelsTypeDef *cadc, uint8_t channel, uint8_t* rank){
 
 	for(int i = 0 ; i <= ADC_MAX_CHANNELS; ++i ){
-		if(cadc->channels[i] == channel){
+		if(cadc->ranks[i] == channel){
 			*rank = (uint8_t)i;
 
 			break;
 		}
 	}
 
+	// Checking if read rank is correct | ADC has maximum 16 ranks
 	if(*rank > 16 || *rank < 0){
 		return ADC_Error;
 	}
@@ -234,38 +330,36 @@ ADC_StatusTypeDef  ADC_GetRank(ADC_ChannelsTypeDef *cadc, uint8_t channel, uint8
   * @param  retval  - pointer to returning value
   * @retval status  - ADC status
   */
-ADC_StatusTypeDef ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc, uint8_t channel , uint16_t* retval){
-	uint64_t sum = 0; // sum of averaged values
-	uint8_t rank;     // channel rank
+ADC_StatusTypeDef ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc, ADC_ChannelsTypeDef* cadc, uint8_t channel , uint16_t* retval){
+
+	uint64_t sum = 0; // sum of values from averaged channel
+	uint8_t rank;     // channel's rank
 
 	// Getting channel rank
-	if(ADC_GetRank(&cadc, channel, &rank) != ADC_OK){
-		return ADC_Error;;
+	if(ADC_GetRank(cadc, channel, &rank) != ADC_OK){
+		return ADC_Error;
 	}
 
-	if(__ADC_IS_DMA_MULTIMODE(hadc) != 0){ // ADC in dual mode
+	if(__ADC_IS_DMA_MULTIMODE(hadc) == 0){ // ADC in independent mode
 		if(sizeof(badc->idma.BufferADC)/sizeof(badc->idma.BufferADC[0]) < ADC_AVERAGED_MEASURES){
 			return ADC_Error;
 		}
 
 
-	}else{								   // ADC in independent mode
-		if(sizeof(badc->ddma.BufferMultiMode)/sizeof(badc->ddma.BufferMultiMode) < ADC_AVERAGED_MEASURES){
-			return ADC_Error;
-		}
+	}else{								   // ADC in dual mode
 
 		if(hadc->Instance == ADC1){
 
 			// Extracting ADC1 values from dual mode buffer
 			for(int  i = 0 ; i <= ADC_BUFF_SIZE ; ++i){
-				badc->ddma.BufferADC_Master[i] = ((badc->ddma.BufferMultiMode[i] >> 16) & 0xFF);
+				badc->ddma.BufferADC_Master[i] = (uint16_t)((badc->ddma.BufferMultiMode[i] >> 16));
 			}
 
 		}else if(hadc->Instance == ADC2){
 
 			// Extracting ADC2 values from dual mode buffer
 			for(int  i = 0 ; i <= ADC_BUFF_SIZE ; ++i){
-				badc->ddma.BufferADC_Slave[i] = (badc->ddma.BufferMultiMode[i] & 0xFF);
+				badc->ddma.BufferADC_Slave[i] = (uint16_t)((badc->ddma.BufferMultiMode[i]));
 			}
 
 		}
@@ -274,9 +368,10 @@ ADC_StatusTypeDef ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc
 	}
 
 
-	int16_t id = 0; // current position of averaged value
-	for( int i = 0; i <= ADC_AVERAGED_MEASURES; ++i){
-		id = (i * ADC_AVERAGED_MEASURES + rank);
+	int id = 0; // current position of averaged value
+
+	for( int i = 0; i < ADC_AVERAGED_MEASURES; ++i){
+		id = (i * ADC_CONVERTED_CHANNELS + rank);
 
 		// adding to sum variable next value correlated to current channel
 		sum += ((__ADC_IS_DMA_MULTIMODE(hadc) == 0)
@@ -286,9 +381,9 @@ ADC_StatusTypeDef ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc
 	                  : badc->ddma.BufferADC_Slave[id]));                   // adding value of ADC in dual mode | checking instance
 	}
 
-	*retval = (sum / ADC_AVERAGED_MEASURES); // averaging by dividing sum with number of averaged conversions
+	*retval = (uint16_t)(sum / ADC_AVERAGED_MEASURES); // averaging by dividing sum with number of averaged conversions
 
-	return HAL_OK;
+	return ADC_OK;
 }
 
 
