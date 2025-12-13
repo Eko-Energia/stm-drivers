@@ -11,20 +11,28 @@ Decription:
     Drivers in being built using registers and low-level features of ADC controller embedded in STM32 cores. Driver is universal for almost all ttype of STM32 cores
 
 Application:
-    Author of this driver will provide documentation with detailed description of main purpose of functionalities. In IDE programmer can obtain common description of functions. Detailed decription of parameters and return values will be located in documentation.
+    To ensure that code won't blow HardFault, please call Init function when working with ADC. Note that, when dual mode is need, call Init_Multimode function in IInit function of ADC Slave (MX_ADC_Init)
 
 Files listing: 
-    1. Inc/adc_driver.h - function prototypes, macros, structs 2. Inc/stm32_family.h - macros of stm32 families definition 3. Src/adc_driver.c - functions' bodies, variables' definitions
+    1. Inc/adc_driver.h   - function prototypes, macros, structs 
+    2. Inc/stm32_family.h - macros of stm32 families definition 
+    3. Src/adc_driver.c   - functions' bodies, variables' definitions
 
 Status:
     General:
-        Driver build is done. Code needs tests and review.
-        Using drtiver's features without Kacper Lasota permission is forbidden.
+        Driver build is done. Code tests are done. Driver supports functionalities like:
+            - ADC Non-Continous Conversion
+            - ADC Continous Conversion
+            - ADC with DMA Normal mode
+            - ADC with DMA Circual mode
+            - ADC Multimode
 
     Detailed:
         1. Inc/adc_driver.h   [DONE]
         2. Inc/stm32_family.h [DONE]
         3. Src/adc_driver.c   [DONE]
+    
+    Note: Driver needs refactor of namiing several functions and variiables. Also needs small optimalization
 
 Author:
     Bartosz Rychlicki
