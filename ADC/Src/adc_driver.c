@@ -317,7 +317,7 @@ ADC_StatusTypeDef  ADC_ConfigGetRanksOfChannels(ADC_HandleTypeDef* hadc, ADC_Cha
 ADC_StatusTypeDef  ADC_GetRank(ADC_ChannelsTypeDef *cadc, uint8_t channel, uint8_t* rank){
 
 	// iterating though all buffer's elements to return given channel's rank
-	for(int i = 0 ; i <= ADC_MAX_CHANNELS; ++i ){
+	for(int i = 0 ; i < ADC_MAX_CHANNELS; ++i ){
 		if(cadc->ranks[i] == channel){
 			*rank = (uint8_t)i;
 
