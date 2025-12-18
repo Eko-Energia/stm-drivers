@@ -224,7 +224,7 @@ __weak ADC_StatusTypeDef  ADC_GetValue(ADC_HandleTypeDef* hadc, ADC_ChannelsType
 		return ADC_Error;
 	}
 
-	// Basic math here | calculating float value with formula, example: voltage = binary/value/adc_resoltuion * maxVoltage
+	// Basic math here | calculating float value with formula, example: voltage = binary_value/adc_resolution * maxVoltage
 	*retval = max * ((float)(float)binaryType / (float)adcResolutiion);
 
 
