@@ -219,7 +219,7 @@ __weak ADC_StatusTypeDef  ADC_GetValue(ADC_HandleTypeDef* hadc, ADC_ChannelsType
 	uint16_t binaryType = 0; 							// init of variable which stores converted value from channel
 	uint32_t adcResolutiion = __ADC_RESOLUTION(hadc);  // reading ADC resolution
 
-	// reading channel's cconverted value
+	// reading channel's converted value
 	if(ADC_ReadChannel(hadc, cadc, badc, channel, &binaryType) != ADC_OK){
 		return ADC_Error;
 	}
