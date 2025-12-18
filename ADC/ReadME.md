@@ -1,43 +1,42 @@
 Title:
-    STM32 Peripherial ADC driver
+STM32 Peripherial ADC driver
 
 Decription:
-    Directory contains source and header files, which were build to help others in working with ADC.
-    
-    Main purpose of ADC driver (STM32 peripherial) is to store functions and macros whiich will simplify workflow with ADC. Least but not last purpose is to make all firmwares of Perła, universal. This will help in locating, analyziing and debuging errors in software.
+Directory contains source and header files, which were build to help others in working with ADC.
+
+    Main purpose of ADC driver (STM32 peripherial) is to store functions and macros whiich will simplify workflow with ADC. Last but not least purpose is to make all firmwares, written in PCBs' cores of Perła, universal. This will help in locating, analyziing and debuging errors in software.
 
 
     NOTE:
-    Drivers in being built using registers and low-level features of ADC controller embedded in STM32 cores. Driver is universal for almost all ttype of STM32 cores
+    Drivers in being built using registers and low-level features of ADC controller embedded in STM32 cores. Driver is universal for almost all type of STM32 cores
 
 Application:
-    To ensure that code won't blow HardFault, please call Init function when working with ADC. Note that, when dual mode is need, call Init_Multimode function in IInit function of ADC Slave (MX_ADC_Init)
+    To ensure that code won't blow HardFault, please call Init function when working with ADC. Note that, when dual mode is need, call Init_Multimode function in Init function of ADC Slave (MX_ADC_Init)
 
 Files listing: 
-    1. Inc/adc_driver.h   - function prototypes, macros, structs 
+    1. Inc/adc_driver.h - function prototypes, macros, structs 
     2. Inc/stm32_family.h - macros of stm32 families definition 
-    3. Src/adc_driver.c   - functions' bodies, variables' definitions
+    3. Src/adc_driver.c - functions' bodies, variables' definitions
 
 Status:
     General:
-        Driver build is done. Code tests are done. Driver supports functionalities like:
-            - ADC Non-Continous Conversion
-            - ADC Continous Conversion
-            - ADC with DMA Normal mode
-            - ADC with DMA Circual mode
+        Driver build is done. Code tests are done. 
+        Driver supports functionalities like: 
+            - ADC Non-Continous Conversion 
+            - ADC Continous Conversion 
+            - ADC with DMA Normal mode 
+            - ADC with DMA Circual mode 
             - ADC Multimode
+            - Auto detect number of channels ussed for data conversion
 
     Detailed:
         1. Inc/adc_driver.h   [DONE]
         2. Inc/stm32_family.h [DONE]
         3. Src/adc_driver.c   [DONE]
-    
-    Note: Driver needs refactor of namiing several functions and variiables. Also needs small optimalization
 
 Author:
     Bartosz Rychlicki
     bartoszrychl@student.agh.edu.pl
-
 
     AGH Eko-Energy
     Software department
