@@ -189,7 +189,7 @@ ADC_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsTypeDef* 
 			}
 		}
 
-		// security check | if converted value is higher than ADC's resolution or greater than 0
+		// security check | if converted value is higher than ADC's resolution or less than 0
 		if(badc->ADC_Buff[channel] > __ADC_RESOLUTION(hadc) || badc->ADC_Buff[channel] < 0){
 			return  ADC_Error;
 		}
