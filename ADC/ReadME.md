@@ -4,7 +4,7 @@ STM32 Peripherial ADC driver
 Decription:
 Directory contains source and header files, which were build to help others in working with ADC.
 
-    Main purpose of ADC driver (STM32 peripherial) is to store functions and macros whiich will simplify workflow with ADC. Last but not least purpose is to make all firmwares, written in PCBs' cores of Perła, universal. This will help in locating, analyziing and debuging errors in software.
+    Main purpose of ADC driver (STM32 peripherial) is to store functions and macros whiich will simplify workflow with ADC. Last but not least purpose is to make all firmwares, written in PCBs' cores of Perła, universal. This will help in locating, analyzing and debuging errors in software.
 
 
     NOTE:
