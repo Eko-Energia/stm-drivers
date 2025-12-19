@@ -44,7 +44,7 @@ static 			uint32_t ADC_RANKS_BITPOS[16] = {
   */
 ADC_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc, ADC_ChannelsTypeDef* cadc){
 
-	// check if ADC is started to be stop to calibrate ADC
+	// check if ADC is started to stop it to calibrate ADC
 	if(__ADC_IS_CONV_STARTED(hadc) != 0){
 		if(HAL_ADC_Stop(hadc) != HAL_OK){
 			return ADC_Error;
