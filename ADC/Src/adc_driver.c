@@ -286,7 +286,7 @@ ADC_StatusTypeDef  ADC_ConfigGetRanksOfChannels(ADC_HandleTypeDef* hadc, ADC_Cha
 
 
 	// Security check
-	if(numberOfConversions >= ADC_MAX_CHANNELS){
+	if(numberOfConversions > ADC_MAX_CHANNELS){
 		return ADC_Error;
 	}
 
