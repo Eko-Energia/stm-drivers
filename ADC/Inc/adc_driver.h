@@ -106,7 +106,7 @@ typedef enum{
 											(((((__HANDLE__)->Instance->SR)       >> ADC_SR_STRT_Pos ) & 0x1U))
 
 	#define __ADC_IS_DMA_ENABLED(__HANDLE__)                                                												\
-											((((__HANDLE__)->DMA_Handle == NULL)   ? 0 : 1))												\
+											((((__HANDLE__)->DMA_Handle == NULL)   ? 0 : 1))
 
 	#define __ADC_RESOLUTION(__HANDLE__)                                                    												\
 											(4095U)
