@@ -15,5 +15,4 @@
 #define RCD_ERROR_ID 192
 #define RCD_CONVERTER_COMMS_ID 403105268
 
-
 #endif /* INC_CAN_ID_LIST_H_ */

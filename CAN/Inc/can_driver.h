@@ -1,12 +1,12 @@
 /**
-  * @file can_driver.h
-  * @brief CAN bus driver for PERLA
-  * @author AGH EKO-ENERGIA
-  * @author Kacper Lasota
-  */
+ * @file can_driver.h
+ * @brief CAN bus driver for PERLA
+ * @author AGH EKO-ENERGIA
+ * @author Kacper Lasota
+ */
 
-#ifndef INC_CAN_DRIVER_H_
-#define INC_CAN_DRIVER_H_
+#ifndef CAN_DRIVER_H
+#define CAN_DRIVER_H
 
 #include "main.h"
 #include "can_id_list.h"
@@ -16,45 +16,70 @@
  * Defines
  */
 
-#define CAN_MAX_DLC 8
-#define CAN_MAX_MSG 32
+#define CAN_MAX_DLC (8)
+#define CAN_MAX_MSG (32)
 
 /**
  * Periodic CAN message
  */
-typedef struct {
-	CAN_TxHeaderTypeDef header;							// frame header
-	uint32_t 			period_ms;						// period of this message
-	uint32_t 			last_tick;						// time stamp of the last message
-	void 				(*GetData)(uint8_t *data);		// fetches data
-}CAN_ScheduledMsg;
+struct CAN_scheduledMsg
+{
+	CAN_TxHeaderTypeDef header;     // frame header
+	uint32_t periodMs;              // period of this message
+	uint32_t lastTick;              // time stamp of the last message
+	void (*getData)(uint8_t *data, void *context); // fetches data
+	void *context;                  // user callback context
+};
 
 /**
  * Periodic CAN message list used for automation
  */
-typedef struct {
-	CAN_ScheduledMsg list[CAN_MAX_MSG];
+struct CAN_scheduledMsgList
+{
+	struct CAN_scheduledMsg list[CAN_MAX_MSG];
 	uint8_t size;
 	uint32_t txMailbox;
-}CAN_ScheduledMsgList;
+};
 
 /**
  * Setup functions
  */
-void CAN_Init(CAN_HandleTypeDef*);
+
+/**
+ * @brief Initialize CAN
+ *
+ * This function initializes the CAN peripheral.
+ *
+ * @param hcan      Pointer to CAN handle
+ */
+void CAN_init(CAN_HandleTypeDef *hcan);
+
+/**
+ * @brief Get configured Node ID
+ * @return Current Node ID
+ */
+uint32_t CAN_getNodeId(void);
 
 /**
  * Functions for scheduled messages
  */
-HAL_StatusTypeDef CAN_AddScheduledMessage(CAN_ScheduledMsg, CAN_ScheduledMsgList*);
-HAL_StatusTypeDef CAN_RemoveScheduledMessage(uint32_t, CAN_ScheduledMsgList*);
+HAL_StatusTypeDef CAN_addScheduledMessage(struct CAN_scheduledMsg msg, struct CAN_scheduledMsgList *buffer);
 
-void CAN_HandleScheduled(CAN_HandleTypeDef *hcan, CAN_ScheduledMsgList*);
+HAL_StatusTypeDef CAN_removeScheduledMessage(uint32_t id, struct CAN_scheduledMsgList *buffer);
+
+void CAN_handleScheduled(CAN_HandleTypeDef *hcan, struct CAN_scheduledMsgList *buffer);
+
+/**
+ * @brief Process all scheduled CAN messages (call in main loop)
+ * Uses the scheduler list provided during initialization.
+ * @param hcan      Pointer to CAN handle
+ * @param scheduler Pointer to the CAN scheduled message list (buffer)
+ */
+void CAN_process(CAN_HandleTypeDef *hcan, struct CAN_scheduledMsgList *scheduler);
 
 /**
  * Functions for received messages
  */
-void CAN_HandleReceived(CAN_HandleTypeDef *hcan, uint8_t fifo);
+void CAN_handleReceived(CAN_HandleTypeDef *hcan, uint8_t fifo);
 
-
-#endif /* INC_CAN_DRIVER_H_ */
+#endif // CAN_DRIVER_H
