@@ -85,15 +85,6 @@ typedef struct{
 }ADC_ChannelsTypeDef;
 
 
-/**
-  * @brief  ADC Status structures definition
-  */
-typedef enum{
-	ADC_OK = 0,
-	ADC_Error
-
-}ADC_StatusTypeDef;
-
 
 /* Private Macros ------------------------------------------------------------------- */
 #if defined(STM32F1_FAMILY)
@@ -465,19 +456,19 @@ typedef enum{
 
 
 /* Functions Prototypes --------------------------------------------------------------------  */
-ADC_StatusTypeDef         ADC_Init(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc, ADC_ChannelsTypeDef* cadc);
+HAL_StatusTypeDef          ADC_Init(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc, ADC_ChannelsTypeDef* cadc);
 
-ADC_StatusTypeDef         ADC_InitMultimode(ADC_HandleTypeDef* hadcMaster, ADC_BufferTypeDef* badc);
+HAL_StatusTypeDef          ADC_InitMultimode(ADC_HandleTypeDef* hadcMaster, ADC_BufferTypeDef* badc);
 
-ADC_StatusTypeDef         ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsTypeDef* cadc, ADC_BufferTypeDef* badc, uint8_t channel, uint16_t*  retval);
+HAL_StatusTypeDef          ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsTypeDef* cadc, ADC_BufferTypeDef* badc, uint8_t channel, uint16_t*  retval);
 
-__weak ADC_StatusTypeDef  ADC_GetValue(ADC_HandleTypeDef* hadc, ADC_ChannelsTypeDef* cadc, ADC_BufferTypeDef* badc, float max, uint8_t channel, float * retval);
+__weak HAL_StatusTypeDef   ADC_GetValue(ADC_HandleTypeDef* hadc, ADC_ChannelsTypeDef* cadc, ADC_BufferTypeDef* badc, float max, uint8_t channel, float * retval);
 
-ADC_StatusTypeDef         ADC_ConfigGetRanksOfChannels(ADC_HandleTypeDef* hadc, ADC_ChannelsTypeDef* cadc, ADC_BufferTypeDef* badc);
+HAL_StatusTypeDef          ADC_ConfigGetRanksOfChannels(ADC_HandleTypeDef* hadc, ADC_ChannelsTypeDef* cadc, ADC_BufferTypeDef* badc);
 
-ADC_StatusTypeDef         ADC_GetRank(ADC_ChannelsTypeDef *cadc, uint8_t channel, uint8_t* rank);
+HAL_StatusTypeDef          ADC_GetRank(ADC_ChannelsTypeDef *cadc, uint8_t channel, uint8_t* rank);
 
-ADC_StatusTypeDef         ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc, ADC_ChannelsTypeDef* cadc, uint8_t channel , uint16_t* retval);
+HAL_StatusTypeDef          ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc, ADC_ChannelsTypeDef* cadc, uint8_t channel , uint16_t* retval);
 
 
 #endif /* INC_ADC_DRIVER_H_ */
