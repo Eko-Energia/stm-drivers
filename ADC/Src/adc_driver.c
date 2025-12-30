@@ -51,22 +51,6 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc, ADC
 		}
 	}
 
-
-
-	// check if dual mode is enabled
-	if(__ADC_IS_DMA_MULTIMODE(hadc) == 0){
-
-		    // checking if DMA is enabled
-			if(__ADC_IS_DMA_ENABLED(hadc) != 0){
-
-				// starting DMA with ADC in Independent mode
-				if(HAL_ADC_Start_DMA(hadc, (uint32_t*)badc->idma.BufferADC, ADC_BUFF_SIZE) != HAL_OK){
-					return HAL_ERROR;
-				}
-			}
-	}
-
-
 	// launching calibration
 	if(HAL_ADCEx_Calibration_Start(hadc) != HAL_OK){
 		return HAL_ERROR;
@@ -81,6 +65,21 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc, ADC
 	if(ADC_ConfigGetRanksOfChannels(hadc, cadc, badc)!= HAL_OK){
 		return HAL_ERROR;
 	}
+
+
+	// check if dual mode is enabled
+	if(__ADC_IS_DMA_MULTIMODE(hadc) == 0){
+
+			// checking if DMA is enabled
+			if(__ADC_IS_DMA_ENABLED(hadc) != 0){
+
+				// starting DMA with ADC in Independent mode
+				if(HAL_ADC_Start_DMA(hadc, (uint32_t*)badc->idma.BufferADC, ADC_CONVERTED_CHANNELS) != HAL_OK){
+					return HAL_ERROR;
+				}
+			}
+	}
+
 
 	return HAL_OK; // returning positive status
 }
@@ -109,7 +108,7 @@ HAL_StatusTypeDef ADC_InitMultimode(ADC_HandleTypeDef* hadcMaster, ADC_BufferTyp
 	}
 
 	// launching dual mode conversion
-	if(HAL_ADCEx_MultiModeStart_DMA(hadcMaster, badc->ddma.BufferMultiMode, ADC_BUFF_SIZE) != HAL_OK){
+	if(HAL_ADCEx_MultiModeStart_DMA(hadcMaster, badc->ddma.BufferMultiMode, ADC_CONVERTED_CHANNELS) != HAL_OK){
 		return HAL_ERROR;
 	}
 
@@ -216,7 +215,7 @@ HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsTypeDef* 
 
 			// re-launching ADC in dual mode conversion with DMA
 			if(__ADC_DMA_MODE(hadc) == 0){
-				if(HAL_ADCEx_MultiModeStart_DMA(hadc, badc->ddma.BufferMultiMode, ADC_BUFF_SIZE) != HAL_OK){
+				if(HAL_ADCEx_MultiModeStart_DMA(hadc, badc->ddma.BufferMultiMode, ADC_CONVERTED_CHANNELS) != HAL_OK){
 					return HAL_ERROR;
 				}
 			}
@@ -225,7 +224,7 @@ HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsTypeDef* 
 
 			// re-launching ADC in independent conversion with DMA
 			if(__ADC_DMA_MODE(hadc) != 0){
-				if(HAL_ADC_Start_DMA(hadc, (uint32_t*)badc->idma.BufferADC, ADC_BUFF_SIZE) != HAL_OK){
+				if(HAL_ADC_Start_DMA(hadc, (uint32_t*)badc->idma.BufferADC, ADC_CONVERTED_CHANNELS) != HAL_OK){
 					return HAL_ERROR;
 				}
 			}
