@@ -112,43 +112,40 @@ HAL_StatusTypeDef CAN_removeScheduledMessage(uint32_t id, struct CAN_scheduledMs
 }
 
 /**
- * @brief This function sends regular messages
+ * @brief Process all scheduled CAN messages (call in main loop)
  */
-void CAN_handleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList *buffer)
+void CAN_handleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList *scheduler)
 {
-	uint32_t currentTick = HAL_GetTick();
-	for (uint8_t i = 0; i < buffer->size; i++)
+	if (hcanPtr == NULL || scheduler == NULL)
 	{
-		struct CAN_scheduledMsg *msg = &buffer->list[i];
+		return;
+	}
+
+	uint32_t currentTick = HAL_GetTick();
+	for (uint8_t i = 0; i < scheduler->size; i++)
+	{
+		struct CAN_scheduledMsg *msg = &scheduler->list[i];
 		if (currentTick > msg->lastTick + msg->periodMs)
 		{
 			uint8_t data[msg->header.DLC];
 			// Initialize data to 0 to be safe
-			for(int k=0; k<msg->header.DLC; k++) data[k] = 0;
+			for(int k=0; k<msg->header.DLC; k++)
+			{
+				data[k] = 0;
+			}
 			
 			if (msg->getData != NULL)
 			{
 				msg->getData(data, msg->context);
 			}
 			
-			if (HAL_CAN_AddTxMessage(hcanPtr, &msg->header, data, &buffer->txMailbox) != HAL_OK)
+			if (HAL_CAN_AddTxMessage(hcanPtr, &msg->header, data, &scheduler->txMailbox) != HAL_OK)
 			{
 				return;
 			}
 
 			msg->lastTick = HAL_GetTick();
 		}
-	}
-}
-
-/**
- * @brief Process all scheduled CAN messages (call in main loop)
- */
-void CAN_process(CAN_HandleTypeDef *hcan, struct CAN_scheduledMsgList *scheduler)
-{
-	if (hcan != NULL && scheduler != NULL)
-	{
-		CAN_handleScheduled(hcan, scheduler);
 	}
 }
 
