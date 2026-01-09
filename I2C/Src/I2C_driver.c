@@ -104,13 +104,13 @@ HAL_StatusTypeDef I2C_Receive_message(I2C_frame* Rx_frame, I2C_pre_post_frame* P
 /*
  *
  * ARGS:
-	 * Frames - Tablica struktur z ramkami
+	 * Frames - Tablica adresów
  * RETURN:
  	 * HAL_OK - Ramki nie zawierają błędów
  	 * HAL_ERROR - Ramki zawierają błąd
  *
  */
-HAL_StatusTypeDef I2C_Valid_address(I2C_frame* Frames, uint8_t Size)
+HAL_StatusTypeDef I2C_Valid_address(uint8_t* Frames, uint8_t Size)
 {
 	uint8_t bit_map[16] = {0}; // 16*8 = 128
 	uint8_t byte = 0;
@@ -118,7 +118,7 @@ HAL_StatusTypeDef I2C_Valid_address(I2C_frame* Frames, uint8_t Size)
 	int16_t address = 0;
 
 	for(uint8_t i = 0; i < Size; i++){
-		address = Frames[i].addres - 128; // przesuwam adres do zakresu <0,127>
+		address = Frames[i] - 128; // przesuwam adres do zakresu <0,127>
 
 		byte = address / 8;		// sprawdzam na którym ideksie czyli bajcie w tablicy bit_map wylonduje adres
 		bit  = address % 8;		// określa na którym miejscu w ciągu 00000000 jest jedynka.
