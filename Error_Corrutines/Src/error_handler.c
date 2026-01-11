@@ -20,7 +20,7 @@
  * Private Function Prototypes
  * ============================================================================ */
 
-static void haltNode(ERROR_HANDLER_HandleTypeDef *hehandler);
+static void haltNode(EH_HandleTypeDef *hehandler);
 static void getData_HeightbeatOK(uint8_t *data, void *context);
 static void getData_Error(uint8_t *data, void *context);
 
@@ -35,7 +35,7 @@ static void getData_Error(uint8_t *data, void *context);
  * @param nodeIdVal   Node ID (used as error frame ID)
  * @param schedulerPtr Pointer to the CAN scheduled message list
  */
-void ERROR_HANDLER_init(ERROR_HANDLER_HandleTypeDef *hehandler, CAN_HandleTypeDef *hcanPtr, uint16_t nodeIdVal, struct CAN_scheduledMsgList *schedulerPtr)
+void EH_init(EH_HandleTypeDef *hehandler, CAN_HandleTypeDef *hcanPtr, uint16_t nodeIdVal, struct CAN_scheduledMsgList *schedulerPtr)
 {
 	if (hehandler == NULL || hcanPtr == NULL || schedulerPtr == NULL)
 	{
@@ -78,9 +78,9 @@ void ERROR_HANDLER_init(ERROR_HANDLER_HandleTypeDef *hehandler, CAN_HandleTypeDe
  * @param errorCode    Unique error code
  * @param severity     Error severity level
  */
-void ERROR_HANDLER_report(ERROR_HANDLER_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_e severity)
+void EH_report(EH_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_e severity)
 {
-	ERROR_HANDLER_reportEx(hehandler, errorCode, severity, NULL, 0);
+	EH_reportEx(hehandler, errorCode, severity, NULL, 0);
 }
 
 /**
@@ -88,19 +88,19 @@ void ERROR_HANDLER_report(ERROR_HANDLER_HandleTypeDef *hehandler, uint16_t error
  * @param errorCode    Unique error code
  * @param severity     Error severity level
  */
-void ERROR_HANDLER_stop(ERROR_HANDLER_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_e severity)
+void EH_stop(EH_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_e severity)
 {
-	ERROR_HANDLER_stopEx(hehandler, errorCode, severity, NULL, 0);
+	EH_stopEx(hehandler, errorCode, severity, NULL, 0);
 }
 
 /**
  * @brief Trigger system-wide Safe State
  * @param reason    Reason code
  */
-void ERROR_HANDLER_triggerSafeState(ERROR_HANDLER_HandleTypeDef *hehandler, uint16_t reason)
+void EH_triggerSafeState(EH_HandleTypeDef *hehandler, uint16_t reason)
 {
 	// Send error frame with ERROR_SEVERITY_SAFE_STATE and reason as error code
-	ERROR_HANDLER_reportEx(hehandler, reason, ERROR_SEVERITY_SAFE_STATE, NULL, 0);
+	EH_reportEx(hehandler, reason, ERROR_SEVERITY_SAFE_STATE, NULL, 0);
 }
 
 /**
@@ -110,7 +110,7 @@ void ERROR_HANDLER_triggerSafeState(ERROR_HANDLER_HandleTypeDef *hehandler, uint
  * @param data         Specific data pointer
  * @param dataLen      Length of data
  */
-void ERROR_HANDLER_reportEx(ERROR_HANDLER_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_e severity, const uint8_t *data, uint8_t dataLen)
+void EH_reportEx(EH_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_e severity, const uint8_t *data, uint8_t dataLen)
 {
 	if (hehandler == NULL || !hehandler->isInitialized)
 	{
@@ -155,10 +155,10 @@ void ERROR_HANDLER_reportEx(ERROR_HANDLER_HandleTypeDef *hehandler, uint16_t err
  * @param data         Specific data pointer
  * @param dataLen      Length of data
  */
-void ERROR_HANDLER_stopEx(ERROR_HANDLER_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_e severity, const uint8_t *data, uint8_t dataLen)
+void EH_stopEx(EH_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_e severity, const uint8_t *data, uint8_t dataLen)
 {
 	// First report the error to switch scheduler state
-	ERROR_HANDLER_reportEx(hehandler, errorCode, severity, data, dataLen);
+	EH_reportEx(hehandler, errorCode, severity, data, dataLen);
 	haltNode(hehandler);
 }
 
@@ -168,7 +168,7 @@ void ERROR_HANDLER_stopEx(ERROR_HANDLER_HandleTypeDef *hehandler, uint16_t error
  * Checks if there are no more active errors. If so, returns to Heartbeat OK.
  * @param errorCode The error code to clear
  */
-void ERROR_HANDLER_clear(ERROR_HANDLER_HandleTypeDef *hehandler, uint16_t errorCode)
+void EH_clear(EH_HandleTypeDef *hehandler, uint16_t errorCode)
 {
 	if (hehandler == NULL || !hehandler->isInitialized)
 	{
@@ -205,7 +205,7 @@ void ERROR_HANDLER_clear(ERROR_HANDLER_HandleTypeDef *hehandler, uint16_t errorC
  * @brief Get the configured Node ID
  * @return Current node ID
  */
-uint16_t ERROR_HANDLER_getNodeId(ERROR_HANDLER_HandleTypeDef *hehandler)
+uint16_t EH_getNodeId(EH_HandleTypeDef *hehandler)
 {
 	if (hehandler == NULL) return 0;
 	return hehandler->nodeId;
@@ -215,7 +215,7 @@ uint16_t ERROR_HANDLER_getNodeId(ERROR_HANDLER_HandleTypeDef *hehandler)
  * @brief Check if error handler is initialized
  * @return 1 if initialized, 0 otherwise
  */
-uint8_t ERROR_HANDLER_isInitialized(ERROR_HANDLER_HandleTypeDef *hehandler)
+uint8_t EH_isInitialized(EH_HandleTypeDef *hehandler)
 {
 	if (hehandler == NULL) return 0;
 	return hehandler->isInitialized;
@@ -255,7 +255,7 @@ static void getData_HeightbeatOK(uint8_t *data, void *context)
  */
 static void getData_Error(uint8_t *data, void *context)
 {
-	ERROR_HANDLER_HandleTypeDef *hehandler = (ERROR_HANDLER_HandleTypeDef*)context;
+	EH_HandleTypeDef *hehandler = (EH_HandleTypeDef*)context;
 	if (hehandler == NULL) return;
 
 	// Construct Error payload from active error variable
@@ -276,7 +276,7 @@ static void getData_Error(uint8_t *data, void *context)
  * @brief Enter infinite loop, handling only CAN communication
  * @note This function does not return
  */
-static void haltNode(ERROR_HANDLER_HandleTypeDef *hehandler)
+static void haltNode(EH_HandleTypeDef *hehandler)
 {
 	if (hehandler == NULL) return;
 	hehandler->isHalted = 1;

@@ -13,7 +13,7 @@
 /* Global references (mocking what main.c would have) */
 extern CAN_HandleTypeDef hcan;
 struct CAN_scheduledMsgList schedulerList = {0};
-static ERROR_HANDLER_HandleTypeDef hErrorHandler = {0};
+static EH_HandleTypeDef hErrorHandler = {0};
 
 void app_main(void)
 {
@@ -24,7 +24,7 @@ void app_main(void)
 
 	/* Initialize Error Handler with Scheduler */
 	/* This automatically adds the Heartbeat OK message (1s period) */
-	ERROR_HANDLER_init(&hErrorHandler, &hcan, MY_NODE_ID, &schedulerList);
+	EH_init(&hErrorHandler, &hcan, MY_NODE_ID, &schedulerList);
 
 	uint32_t start = HAL_GetTick();
 
@@ -49,31 +49,31 @@ void app_main(void)
 			case 1:
 				/* 5s: Simulate Minor Error A */
 				/* Should replace Heartbeat OK with Error Message (300ms period) with Code 0x0100 */
-				ERROR_HANDLER_report(&hErrorHandler, 0x0100, ERROR_SEVERITY_WARNING);
+				EH_report(&hErrorHandler, 0x0100, ERROR_SEVERITY_WARNING);
 				break;
 
 			case 2:
 				/* 10s: Simulate Minor Error B (Overwrites A) */
 				/* Should update Error Message to Code 0x0200 */
-				ERROR_HANDLER_report(&hErrorHandler, 0x0200, ERROR_SEVERITY_ERROR);
+				EH_report(&hErrorHandler, 0x0200, ERROR_SEVERITY_ERROR);
 				break;
 
 			case 3:
 				/* 15s: Clear Error A (Should fail/ignore as B is active) */
 				/* Should still show Error 0x0200 */
-				ERROR_HANDLER_clear(&hErrorHandler, 0x0100);
+				EH_clear(&hErrorHandler, 0x0100);
 				break;
 
 			case 4:
 				/* 20s: Clear Error B (Correct) */
 				/* Should return to Heartbeat OK (1s period, Code 0xFFFF). */
-				ERROR_HANDLER_clear(&hErrorHandler, 0x0200);
+				EH_clear(&hErrorHandler, 0x0200);
 				break;
 
 			case 5:
 				/* 25s: Simulate Critical Error (Stop) */
 				/* Should send Error Message and enter infinite loop processing CAN */
-				ERROR_HANDLER_stop(&hErrorHandler, 0xDEAD, ERROR_SEVERITY_ERROR);
+				EH_stop(&hErrorHandler, 0xDEAD, ERROR_SEVERITY_ERROR);
 				break;
 
 			default:

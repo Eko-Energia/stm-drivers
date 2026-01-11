@@ -8,7 +8,7 @@ Enhanced error reporting and heartbeat module for the STM32 CAN network. integra
 - **Scheduled Reporting**: 
   - **Heartbeat (Normal)**: Sends `0xFFFF` every 1000ms.
   - **Error (Active)**: Sends the active error code every 300ms.
-- **Node Halted State**: `ERROR_HANDLER_stop` halts application logic but keeps the CAN bus alive.
+- **Node Halted State**: `EH_stop` halts application logic but keeps the CAN bus alive.
 
 ## CAN Frame Format
 
@@ -24,23 +24,23 @@ Enhanced error reporting and heartbeat module for the STM32 CAN network. integra
 ```c
 /* Initialize with CAN handle, Node ID, and Scheduler */
 CAN_init(&hcan, MY_NODE_ID, &schedulerList);
-ERROR_HANDLER_init(&hcan, MY_NODE_ID, &schedulerList);
+EH_init(&hcan, MY_NODE_ID, &schedulerList);
 ```
 
 ### Reporting
 ```c
 // Report and continue (overwrites any previous error)
-ERROR_HANDLER_report(0x0123, ERROR_SEVERITY_WARNING);
+EH_report(0x0123, ERROR_SEVERITY_WARNING);
 
 // Report with data snapshot
-ERROR_HANDLER_reportEx(0x0123, ERROR_SEVERITY_ERROR, dataPtr, 5);
+EH_reportEx(0x0123, ERROR_SEVERITY_ERROR, dataPtr, 5);
 
 // Report and halt
-ERROR_HANDLER_stop(0xDEAD, ERROR_SEVERITY_ERROR);
+EH_stop(0xDEAD, ERROR_SEVERITY_ERROR);
 ```
 
 ### Clearing
 ```c
 // Clear specific error (returns to Heartbeat if code matches)
-ERROR_HANDLER_clear(0x0123);
+EH_clear(0x0123);
 ```

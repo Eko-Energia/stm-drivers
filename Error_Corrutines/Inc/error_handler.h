@@ -9,8 +9,8 @@
  *          Supports STM32 bxCAN architecture.
  */
 
-#ifndef ERROR_HANDLER_H
-#define ERROR_HANDLER_H
+#ifndef EH_H
+#define EH_H
 
 #include "main.h"
 #include "can_driver.h"
@@ -105,7 +105,7 @@ typedef struct
 	uint8_t activeSpecificDataLen;                           /**< Specific Data Length */
 	uint8_t isInitialized;                                   /**< Module initialized flag */
 	uint8_t isHalted;                                        /**< Node Halted Flag */
-} ERROR_HANDLER_HandleTypeDef;
+} EH_HandleTypeDef;
 
 /* ============================================================================
  * Initialization
@@ -119,7 +119,7 @@ typedef struct
  * @param nodeId    Node ID (used as error frame ID)
  * @param scheduler Pointer to the CAN scheduled message list
  */
-void ERROR_HANDLER_init(ERROR_HANDLER_HandleTypeDef *hehandler, CAN_HandleTypeDef *hcan, uint16_t nodeId, struct CAN_scheduledMsgList *scheduler);
+void EH_init(EH_HandleTypeDef *hehandler, CAN_HandleTypeDef *hcan, uint16_t nodeId, struct CAN_scheduledMsgList *scheduler);
 
 /* ============================================================================
  * Error Reporting Functions
@@ -131,7 +131,7 @@ void ERROR_HANDLER_init(ERROR_HANDLER_HandleTypeDef *hehandler, CAN_HandleTypeDe
  * @param errorCode    Unique error code
  * @param severity     Error severity level
  */
-void ERROR_HANDLER_report(ERROR_HANDLER_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_e severity);
+void EH_report(EH_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_e severity);
 
 /**
  * @brief Report an error and halt the node
@@ -139,14 +139,14 @@ void ERROR_HANDLER_report(ERROR_HANDLER_HandleTypeDef *hehandler, uint16_t error
  * @param errorCode    Unique error code
  * @param severity     Error severity level
  */
-void ERROR_HANDLER_stop(ERROR_HANDLER_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_e severity);
+void EH_stop(EH_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_e severity);
 
 /**
  * @brief Trigger system-wide Safe State
  * @param hehandler Pointer to Error Handler handle
  * @param reason    Reason code
  */
-void ERROR_HANDLER_triggerSafeState(ERROR_HANDLER_HandleTypeDef *hehandler, uint16_t reason);
+void EH_triggerSafeState(EH_HandleTypeDef *hehandler, uint16_t reason);
 
 /* ============================================================================
  * Extended Error Reporting (with diagnostic data)
@@ -155,12 +155,12 @@ void ERROR_HANDLER_triggerSafeState(ERROR_HANDLER_HandleTypeDef *hehandler, uint
 /**
  * @brief Report an error with additional diagnostic data
  */
-void ERROR_HANDLER_reportEx(ERROR_HANDLER_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_e severity, const uint8_t *data, uint8_t dataLen);
+void EH_reportEx(EH_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_e severity, const uint8_t *data, uint8_t dataLen);
 
 /**
  * @brief Report an error with diagnostic data and halt the node
  */
-void ERROR_HANDLER_stopEx(ERROR_HANDLER_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_e severity, const uint8_t *data, uint8_t dataLen);
+void EH_stopEx(EH_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_e severity, const uint8_t *data, uint8_t dataLen);
 
 /**
  * @brief Clear a specific error from the active error state
@@ -169,7 +169,7 @@ void ERROR_HANDLER_stopEx(ERROR_HANDLER_HandleTypeDef *hehandler, uint16_t error
  * @param hehandler Pointer to Error Handler handle
  * @param errorCode The error code to clear
  */
-void ERROR_HANDLER_clear(ERROR_HANDLER_HandleTypeDef *hehandler, uint16_t errorCode);
+void EH_clear(EH_HandleTypeDef *hehandler, uint16_t errorCode);
 
 /* ============================================================================
  * Utility Functions
@@ -180,17 +180,17 @@ void ERROR_HANDLER_clear(ERROR_HANDLER_HandleTypeDef *hehandler, uint16_t errorC
  * @param hehandler Pointer to Error Handler handle
  * @return Current node ID
  */
-uint16_t ERROR_HANDLER_getNodeId(ERROR_HANDLER_HandleTypeDef *hehandler);
+uint16_t EH_getNodeId(EH_HandleTypeDef *hehandler);
 
 /**
  * @brief Check if error handler is initialized
  * @param hehandler Pointer to Error Handler handle
  * @return 1 if initialized, 0 otherwise
  */
-uint8_t ERROR_HANDLER_isInitialized(ERROR_HANDLER_HandleTypeDef *hehandler);
+uint8_t EH_isInitialized(EH_HandleTypeDef *hehandler);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // ERROR_HANDLER_H
+#endif // EH_H
