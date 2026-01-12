@@ -51,10 +51,4 @@ HAL_StatusTypeDef CAN_RemoveScheduledMessage(uint32_t, CAN_ScheduledMsgList*);
 
 void CAN_HandleScheduled(CAN_HandleTypeDef *hcan, CAN_ScheduledMsgList*);
 
-/**
- * Functions for received messages
- */
-void CAN_HandleReceived(CAN_HandleTypeDef *hcan, uint8_t fifo);
-
-
 #endif /* INC_CAN_DRIVER_H_ */
