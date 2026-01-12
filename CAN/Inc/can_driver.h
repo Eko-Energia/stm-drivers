@@ -67,17 +67,4 @@ HAL_StatusTypeDef CAN_addScheduledMessage(struct CAN_scheduledMsg msg, struct CA
 
 HAL_StatusTypeDef CAN_removeScheduledMessage(uint32_t id, struct CAN_scheduledMsgList *buffer);
 
-/**
- * @brief Process all scheduled CAN messages (call in main loop)
- * Uses the scheduler list provided during initialization.
- * @param hcan      Pointer to CAN handle
- * @param scheduler Pointer to the CAN scheduled message list (buffer)
- */
-void CAN_handleScheduled(CAN_HandleTypeDef *hcan, struct CAN_scheduledMsgList *scheduler);
-
-/**
- * Functions for received messages
- */
-void CAN_handleReceived(CAN_HandleTypeDef *hcan, uint8_t fifo);
-
-#endif // CAN_DRIVER_H
+#endif /* INC_CAN_DRIVER_H_ */

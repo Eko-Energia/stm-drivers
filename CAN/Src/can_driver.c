@@ -148,35 +148,3 @@ void CAN_handleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList
 		}
 	}
 }
-
-/**
- * @brief	Basic functionality only handles safe state and error MSG
- * 			Put this into HAL_CAN_RxFifo0MsgPendingCallback
- * @param	hcan pointer to a CAN_HandleTypeDef structure that contains
- *         	the configuration information for the specified CAN.
- * @param	fifo Fifo number of the received message to be read.
- * 			This parameter can be the value of @arg CAN_receive_FIFO_number
- */
-void CAN_handleReceived(CAN_HandleTypeDef *hcanPtr, uint8_t fifo)
-{
-	/* NOTE : This function should not be modified, when it is needed,
-	 the CAN_HandleReceived could be implemented in the
-	 user file
-	 */
-	CAN_RxHeaderTypeDef rxHeader;
-	uint8_t rxData[CAN_MAX_DLC];
-
-	HAL_CAN_GetRxMessage(hcanPtr, fifo, &rxHeader, rxData);
-
-	switch (rxHeader.ExtId)
-	{
-	case SAFE_STATE_ID:
-		// Safe state handling
-		break;
-	case ERROR_MSG_ID:
-		// Error message handling
-		break;
-	default:
-		break;
-	}
-}
