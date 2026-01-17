@@ -269,9 +269,14 @@ typedef struct{
 
 #elif defined(STM32F3_FAMILY)
 
+	#include "stm32f3xx.h"			// Including lib, which contains READ_REG and READ_BIT functions
+
+	#define  ADC_CCR_OFFSET 0x300	// CCR reg address offset from base ADC1 address
+
+
 	/* Macros Function type for core of F3 family-------------------------------------- */
-	#define __ADC_IS_DMA_MULTIMODE                                                          												\
-											((READ_REG(ADC_COMMON->CCR, ADC12_CCR_MULTI_Msk) == 0U) ? 0U : 1U)
+	#define _#define __ADC_IS_DMA_MULTIMODE(__HANDLE__)                                                          												\
+											(((READ_REG((ADC1_BASE + ADC_CCR_OFFSET) >> ADC_CCR_DUAL_Pos) & 0x1U) == 0U) ? 0U : 1U)
 
 	#define __ADC_IS_CONV_STARTED(__HANDLE__)                                               												\
 											(((((__HANDLE__)->Instance->CR >> ADC_CR_ADSTART_Pos) & 0x1U)))

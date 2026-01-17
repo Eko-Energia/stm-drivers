@@ -284,9 +284,19 @@ HAL_StatusTypeDef  ADC_ConfigGetRanksOfChannels(ADC_HandleTypeDef* hadc, ADC_Cha
 	uint32_t numberOfConversions = ((uint8_t)(hadc->Instance->SQR1 >> 20)) + 1;
 
 
-	// Security check
+	// switching reading reg logic, cause F3 cores stores information about DUALMODE in different bitpos
+	#if defined(STM32F3)
 
-	if(numberOfConversions > ADC_MAX_CHANNELS){
+	numberOfConversions = ((uint8_t)(hadc->Instance->SQR1) & 0b1111) + 1;
+
+#else
+	//Reading number of channels to be converted
+	numberOfConversions = ((uint8_t)(hadc->Instance->SQR1 >> 20)) + 1;
+
+#endif
+
+	// Security check if number of ADC's number of turned on channels was correctly calculated
+	if(numberOfConversions > ADC_MAX_CHANNELS || numberOfConversions < 1){
 		return HAL_ERROR;
 	}
 
