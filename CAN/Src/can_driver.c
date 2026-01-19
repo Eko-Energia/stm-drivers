@@ -5,7 +5,6 @@
   * @author Kacper Lasota
   */
 
-
 /*
  * TODO
  *
@@ -14,7 +13,6 @@
  * Received messages handling
  *
  */
-
 #include "can_driver.h"
 
 /**
@@ -51,7 +49,6 @@ void CAN_Init(CAN_HandleTypeDef* hcan)
 		Error_Handler();
 	}
 }
-
 
 /**
  * @brief Add new message to the periodic buffer

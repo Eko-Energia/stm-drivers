@@ -20,6 +20,25 @@
 #define CAN_MAX_MSG 32
 
 /**
+ * @brief Generic macro to swap endianness based on variable type.~
+ * 
+ * Endiannes should be handlend in GetData function of every 
+ * * usage: 
+ * uint32_t val = 0x12345678;
+ * val = SWAP_ENDIANNESS(val); // Becomes 0x78563412
+ */
+#define SWAP_ENDIANNESS(x) _Generic((x),       \
+    uint8_t:  (x),                             \
+    int8_t:   (x),                             \
+    uint16_t: __builtin_bswap16(x),                  \
+    int16_t:  __builtin_bswap16(x),                  \
+    uint32_t: __builtin_bswap32(x),                  \
+    int32_t:  __builtin_bswap32(x),                  \
+    uint64_t: __builtin_bswap64(x),                  \
+    int64_t:  __builtin_bswap64(x)                   \
+)
+
+/**
  * Periodic CAN message
  */
 typedef struct {
