@@ -55,8 +55,8 @@ void 	  PCBCells_CAN_Get_CAN2_Data_Therm8(uint8_t *data);
 void 	  PCBCells_CAN_Get_CAN2_Data_Therm9(uint8_t *data);
 
 /* Macros ------------------------------------------------------------------------------------- */
-#define PCBCELLS_CAN_THERM_OFFSET  (49.8039f)
-#define PCBCELLS_CAN_THERM_GAIN    (0.39216f)
+#define PCBCELLS_CAN_THERM_OFFSET  (0.0f)
+#define PCBCELLS_CAN_THERM_GAIN    (0.390625f)
 
 #define PCBCELLS_CAN_THERM_PERIOD  (200)
 #define PCBCELLS_CAN_THERM_DLC     (1)

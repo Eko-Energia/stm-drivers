@@ -102,15 +102,12 @@ HAL_StatusTypeDef ADC_InitMultimode(ADC_HandleTypeDef* hadcMaster, ADC_BufferTyp
 		return HAL_ERROR;
 	}
 
-	// starting calibration
-	if(HAL_ADCEx_Calibration_Start(hadcMaster, ADC_SINGLE_ENDED) != HAL_OK){
-		return HAL_ERROR;
-	}
-
 	// launching dual mode conversion
 	if(HAL_ADCEx_MultiModeStart_DMA(hadcMaster, badc->ddma.BufferMultiMode, ADC_BUFF_SIZE) != HAL_OK){
 		return HAL_ERROR;
 	}
+
+	// Starting after launch of Dual mode
 
 
 	return HAL_OK;

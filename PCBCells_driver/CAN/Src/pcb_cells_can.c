@@ -127,7 +127,7 @@ HAL_StatusTypeDef PCBCells_CAN_ScaleValue(PCBCells_TypeDef* pc, uint8_t thermInd
 	uint8_t binaryType = 0; 	// Init of variable that will store calculated binary type of temperature, its type will be correct to those which should be sent via CAN
 
 	// Calculating binary type of temperature | refers to: binaryType = (realValue - offset)/ gain;
-	binaryType = (*realValue - PCBCELLS_CAN_THERM_OFFSET) / PCBCELLS_CAN_THERM_GAIN;
+	binaryType = (*realValue + PCBCELLS_CAN_THERM_OFFSET) / PCBCELLS_CAN_THERM_GAIN;
 
 	// assigning calculated binary type of temperature to correct index in array (stored in PCBCells_TypeDef), index of array is equal to thermIndex - 1
 	pc->pcadc.PCBCells_temperatures[thermIndex] = binaryType;

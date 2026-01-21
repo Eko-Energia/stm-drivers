@@ -138,7 +138,7 @@ HAL_StatusTypeDef PCBCells_ADC_ReadTemperature(PCBCells_TypeDef* pc, uint8_t adc
 		}
 
 	// Calculating resistance of thermistor
-	Rt = 12456 / voltagePin_f * (3.218f - voltagePin_f);
+	Rt = (float)10000.0f * (VCC_SUPPLY_VOLTAGE - voltagePin_f)/voltagePin_f;
 
 	// calculating and calibrating temperature
 	*retval = PCBCells_ADC_NTC_calibrateTemperature(PCBCells_ADC_NTC_GetTemperature(Rt) + 1.4f);

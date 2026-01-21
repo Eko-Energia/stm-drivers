@@ -49,7 +49,7 @@ HAL_StatusTypeDef PCBCells_Init(PCBCells_TypeDef* pc, ADC_HandleTypeDef* hadc1, 
 	}
 
 	// Init ADC1
-	if(ADC_Init(&pc->pcadc.hadc1, &pc->pcadc.badc1, &pc->pcadc.cadc1) != HAL_OK){
+	if(ADC_Init(&(pc->pcadc.hadc1), &(pc->pcadc.badc1), &(pc->pcadc.cadc1)) != HAL_OK){
 		return HAL_ERROR;
 	}
 
@@ -59,10 +59,20 @@ HAL_StatusTypeDef PCBCells_Init(PCBCells_TypeDef* pc, ADC_HandleTypeDef* hadc1, 
 		return HAL_ERROR;
 	}
 
-	// Init dual mode conversion for ADC1 and ADC2
-	if(ADC_InitMultimode(&pc->pcadc.hadc1, &pc->pcadc.badc1) != HAL_OK){
-		return HAL_ERROR;
+	/*
+	 * Stopping ADCs to launch dual mode
+	 */
+
+	// stopping ADC1
+	if(HAL_ADC_Stop(&pc->pcadc.hadc1)!= HAL_OK){
+		return HAL_OK;
 	}
+
+	// stopping ADC2
+	if(HAL_ADC_Stop(&pc->pcadc.hadc2)!= HAL_OK){
+		return HAL_OK;
+	}
+
 
 	// Adding frames to CAN buffer
 	if(PCBCells_CAN_InitFrames(pc) != HAL_OK){
@@ -125,25 +135,17 @@ HAL_StatusTypeDef PCBCells_Mode_Error(PCBCells_TypeDef* pc){
 
 HAL_StatusTypeDef PCBCells_Peripherals_Start(PCBCells_TypeDef* pc){
 
-	// Starting ADC1
-	if(HAL_ADC_Start(&pc->pcadc.hadc1) != HAL_OK){
-		return HAL_ERROR;
-	}
-
-	// Starting ADC2
-	if(HAL_ADC_Start(&pc->pcadc.hadc2) != HAL_OK){
-		return HAL_ERROR;
-	}
-
 	// Launching Dual Mode Conversion
 	if(HAL_ADCEx_MultiModeStart_DMA(&pc->pcadc.hadc1, (uint32_t*)pc->pcadc.badc1.ddma.BufferADC_Master, ADC_MAX_CHANNELS) != HAL_OK){
 		return HAL_ERROR;
 	}
 
-
-	// Starting CAN
-	if(HAL_CAN_Start(&pc->pccan.hcan) != HAL_OK){
-		return HAL_ERROR;
+	// if can is not already launch, then start it up
+	if(HAL_CAN_GetState(&pc->pccan.hcan) == HAL_CAN_STATE_READY){
+		// Starting CAN
+		if(HAL_CAN_Start(&pc->pccan.hcan) != HAL_OK){
+			return HAL_ERROR;
+		}
 	}
 
 	return HAL_OK;
