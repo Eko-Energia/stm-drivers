@@ -1,10 +1,18 @@
 /**
- * @file can_driver.c
- * @brief CAN bus driver for PERLA
- * @author AGH EKO-ENERGIA
- * @author Kacper Lasota
- */
+  * @file can_driver.c
+  * @brief CAN bus driver for PERLA
+  * @author AGH EKO-ENERGIA
+  * @author Kacper Lasota
+  */
 
+/*
+ * TODO
+ *
+ * Error handling both on bus and generic error messages
+ * Filter configuration
+ * Received messages handling
+ *
+ */
 #include "can_driver.h"
 
 /* Include error handler if available */
@@ -48,13 +56,6 @@ void CAN_init(CAN_HandleTypeDef *hcanPtr)
 	{
 		Error_Handler();
 	}
-
-	/* Initialize error handler */
-	/* Initialize error handler */
-	/* ERROR_HANDLER must be initialized explicitly by the user now
-	 * because it requires a context struct.
-	 */
-}
 
 /**
  * @brief Add new message to the periodic buffer
