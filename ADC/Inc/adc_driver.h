@@ -181,7 +181,7 @@ typedef struct{
 
 	/* Macros Function type for core of F2 family-------------------------------------- */
 	#define __ADC_IS_DMA_MULTIMODE                                                          												\
-											((READ_REG(ADC_COMMON->CCR, ADC_CCR_MULTI_Msk) == ADC_CCR_MULTI_0) ? 0U : 1U)
+											((READ_REG(((ADC_Common_TypeDef *)(ADC1_BASE + ADC_CCR_OFFSET))->CCR, ADC_CCR_DUAL) != 0U) ? 1U : 0U)
 
 	#define __ADC_IS_CONV_STARTED(__HANDLE__)                                               												\
 											(((((__HANDLE__)->Instance->SR) >> ADC_SR_STRT_Pos) & 0x1U))
@@ -275,8 +275,8 @@ typedef struct{
 
 
 	/* Macros Function type for core of F3 family-------------------------------------- */
-	#define _#define __ADC_IS_DMA_MULTIMODE(__HANDLE__)                                                          												\
-											(((READ_REG((ADC1_BASE + ADC_CCR_OFFSET) >> ADC_CCR_DUAL_Pos) & 0x1U) == 0U) ? 0U : 1U)
+	#define __ADC_IS_DMA_MULTIMODE(__HANDLE__)                                                          												\
+											(((READ_REG(*(volatile uint32_t *)(ADC1_BASE + ADC_CCR_OFFSET)) >> ADC_CCR_DUAL_Pos) & 0x1U) == 0U ? 0U : 1U)
 
 	#define __ADC_IS_CONV_STARTED(__HANDLE__)                                               												\
 											(((((__HANDLE__)->Instance->CR >> ADC_CR_ADSTART_Pos) & 0x1U)))
@@ -370,7 +370,7 @@ typedef struct{
 
 	/* Macros Function type for core of F4 family-------------------------------------- */
 	#define __ADC_IS_DMA_MULTIMODE                                                          												\
-											((READ_REG(ADC_COMMON->CCR, ADC_CCR_MULTI_Msk) == ADC_CCR_MULTI_0) ? 0U : 1U)
+											((READ_REG(((ADC_Common_TypeDef *)(ADC1_BASE + ADC_CCR_OFFSET))->CCR, ADC_CCR_DUAL) != 0U) ? 1U : 0U)
 
 	#define __ADC_IS_CONV_STARTED(__HANDLE__)                                               												\
 											(((((__HANDLE__)->Instance->SR) >> ADC_SR_STRT_Pos) & 0x1U))

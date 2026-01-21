@@ -280,21 +280,22 @@ void               HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc){
   */
 HAL_StatusTypeDef  ADC_ConfigGetRanksOfChannels(ADC_HandleTypeDef* hadc, ADC_ChannelsTypeDef* cadc, ADC_BufferTypeDef* badc){
 
-	//Reading number of channels to be converted
-	uint32_t numberOfConversions = ((uint8_t)(hadc->Instance->SQR1 >> 20)) + 1;
+	//Initialize variable that stores number of conversions
+	uint32_t numberOfConversions;
 
 
-	// switching reading reg logic, cause F3 cores stores information about DUALMODE in different bitpos
-	#if defined(STM32F3)
+	// Adjust reading logic: F3 cores store the conversion sequence length (number of conversions) in different SQR1 bit positions
+	#if defined(STM32F3_FAMILY)
 
 	numberOfConversions = ((uint8_t)(hadc->Instance->SQR1) & 0b1111) + 1;
 
-#else
+	#else
 	//Reading number of channels to be converted
 	numberOfConversions = ((uint8_t)(hadc->Instance->SQR1 >> 20)) + 1;
 
-#endif
+	#endif
 
+	
 	// Security check if number of ADC's number of turned on channels was correctly calculated
 	if(numberOfConversions > ADC_MAX_CHANNELS || numberOfConversions < 1){
 		return HAL_ERROR;
