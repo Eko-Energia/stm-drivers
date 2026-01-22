@@ -180,8 +180,14 @@ typedef struct{
 #elif defined(STM32F2_FAMILY)
 
 	/* Macros Function type for core of F2 family-------------------------------------- */
-	#define __ADC_IS_DMA_MULTIMODE                                                          												\
-											((READ_REG(((ADC_Common_TypeDef *)(ADC1_BASE + ADC_CCR_OFFSET))->CCR, ADC_CCR_DUAL) != 0U) ? 1U : 0U)
+
+	#include "stm32f2xx.h"					// Including lib, which contains READ_REG and READ_BIT functions
+
+	#define  ADC_CCR_OFFSET 0x04			// CCR reg address offset from base ADC1 address
+
+
+	#define __ADC_IS_DMA_MULTIMODE(__HANDLE__) 																											\
+		    							    ((READ_BIT(ADC->CCR, ADC_CCR_MULTI) != 0U) ? 0U : 1U)
 
 	#define __ADC_IS_CONV_STARTED(__HANDLE__)                                               												\
 											(((((__HANDLE__)->Instance->SR) >> ADC_SR_STRT_Pos) & 0x1U))
@@ -195,7 +201,7 @@ typedef struct{
 											 ((((__HANDLE__)->Instance->CR1 >> ADC_CR1_RES_Pos) & 0b11) == 0b10) ? 255U  : 63U )
 
 	#define __ADC_DMA_MODE(__HANDLE__)                                                      												\
-											((((__HANDLE__)->DMA_Handle->Instance->CCR >> DMA_CCR_CIRC_Pos) & 0x1U))
+											(((__HANDLE__)->DMA_Handle->Init.Mode == DMA_NORMAL) ? 0U : 1U)
 
 	#define __ADC_EOC(__HANDLE__)                                                           												\
 											((((__HANDLE__)->Instance->SR >> ADC_SR_EOC_Pos) & 0x1U))

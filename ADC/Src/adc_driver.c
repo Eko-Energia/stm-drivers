@@ -78,6 +78,17 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc, ADC
 					return HAL_ERROR;
 				}
 			}
+	}else{
+
+			// checking if DMA is enabled
+			if(__ADC_IS_DMA_ENABLED(hadc) != 0){
+
+				// stopping ADC to reconfigure it for dual mode DMA
+				if(HAL_ADC_Stop(hadc) != HAL_OK){
+					return HAL_ERROR;
+				}
+			}
+
 	}
 
 
