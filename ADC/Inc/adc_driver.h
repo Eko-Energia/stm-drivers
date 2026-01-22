@@ -389,7 +389,7 @@ typedef struct{
 											 ((((__HANDLE__)->Instance->CR1 >> ADC_CR1_RES_Pos) & 0b11) == 0b10) ? 255U  : 63U )
 
 	#define __ADC_DMA_MODE(__HANDLE__)                                                      												\
-											((((__HANDLE__)->DMA_Handle->Instance->CR >> DMA_SxCR_CIRC_Pos) & 0x1U))
+											(((__HANDLE__)->DMA_Handle->Init.Mode == DMA_NORMAL) ? 0U : 1U)
 
 	#define __ADC_EOC(__HANDLE__)                                                           												\
 											((((__HANDLE__)->Instance->SR >> ADC_SR_EOC_Pos) & 0x1U))
