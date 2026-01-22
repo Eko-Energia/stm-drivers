@@ -295,18 +295,10 @@ HAL_StatusTypeDef  ADC_ConfigGetRanksOfChannels(ADC_HandleTypeDef* hadc, ADC_Cha
 	uint32_t numberOfConversions;
 
 
-	// Adjust reading logic: F3 cores store the conversion sequence length (number of conversions) in different SQR1 bit positions
-	#if defined(STM32F3_FAMILY)
-
-	numberOfConversions = ((uint8_t)(hadc->Instance->SQR1) & 0b1111) + 1;
-
-	#else
 	//Reading number of channels to be converted
-	numberOfConversions = ((uint8_t)(hadc->Instance->SQR1 >> 20)) + 1;
+	numberOfConversions = ((hadc->Instance->SQR1 & ADC_SQR1_L_Msk) >> ADC_SQR1_L_Pos) + 1;
 
-	#endif
 
-	
 	// Security check if number of ADC's number of turned on channels was correctly calculated
 	if(numberOfConversions > ADC_MAX_CHANNELS || numberOfConversions < 1){
 		return HAL_ERROR;
