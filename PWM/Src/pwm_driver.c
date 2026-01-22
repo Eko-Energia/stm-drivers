@@ -1,3 +1,10 @@
+/**
+  * @file pwm_driver.c
+  * @brief PWM signal driver for PERLA
+  * @author AGH EKO-ENERGIA
+  * @author Andrzej Gondek
+  */
+
 #include "pwm_driver.h"
 #include"main.h"
 #include <math.h>
@@ -6,45 +13,53 @@
 #include <string.h>
 #include <stdio.h>
 
+/**
+ * @breif initiate PWM signal
+ */
+void PWM_initialize(struct PWM_signal* signal,int frequency, bool isChannel1, TIM_HandleTypeDef *htim ) {
+	signal->PWM_width = 0.f;
+	signal->readFlag = false;
+	signal->frequency = frequency;
+	signal->icVal = 0;
+	signal->ch1 = isChannel1;
+	signal->sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+	signal->sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
+	signal->sConfigIC.ICPrescaler = TIM_ICPSC_DIV8;
+	signal->sConfigIC.ICFilter = 0;
+	if(isChannel1){
+		HAL_TIM_IC_ConfigChannel(htim, &signal->sConfigIC, TIM_CHANNEL_1);
+	}
+	else{
+		HAL_TIM_IC_ConfigChannel(htim, &signal->sConfigIC, TIM_CHANNEL_2);
+	}
 
-void PWM_Initialize(PWM_Signal* signal,int frequency) {
-	signal->PWM_Width = 0.f;
-	signal->Read_Flag = false;
-	signal->Frequency = frequency;
-	signal->Capture_count = 0;
-	signal->Widths[0] = 0.f;
-	signal->Widths[1] = 0.f;
-	signal->Widths[2] = 0.f;
-	signal->Widths[3] = 0.f;
-	signal->Widths[4] = 0.f;
 }
-
-
-
-void PWM_Update(TIM_HandleTypeDef *htim, PWM_Signal *PWM, uint32_t channel)
+/**
+ * @brief Read and compute PWM signal parameters
+ * @param htim pointer to input capture timer
+ * @param PWM pointer to a PWM_signal struct
+ * @param isChannel1 bool whether combine channels are set to PWM input on channel one, false means that channels are set to PWM input on channel 2
+ */
+void PWM_update(TIM_HandleTypeDef *htim,struct PWM_signal *PWM, bool isChannel1)
 {
-    if (PWM->Capture_count == 0)
-    {
-    	PWM->IC_Val1 = HAL_TIM_ReadCapturedValue(htim, channel);
-        if (PWM->Read_Flag)
-        {
-        	PWM->Widths[4] = PWM->Widths[3];
-            PWM->Widths[3] = PWM->Widths[2];
-			PWM->Widths[2] = PWM->Widths[1];
-		    PWM->Widths[1] = PWM->Widths[0];
-            PWM->Widths[0] = (float)(PWM->IC_Val2) / ((float)PWM->IC_Val1);
-        	PWM->PWM_Width = (PWM->Widths[0]+PWM->Widths[1]+PWM->Widths[2]+PWM->Widths[3]+PWM->Widths[4])/(float)(5);
-        }
-        __HAL_TIM_SET_COUNTER(htim, 0);
-        __HAL_TIM_SET_CAPTUREPOLARITY(htim, channel, TIM_INPUTCHANNELPOLARITY_FALLING);
-        PWM->Capture_count = 1;
-    }
-    else
-    {
-    	PWM->IC_Val2 = HAL_TIM_ReadCapturedValue(htim, channel);
-        __HAL_TIM_SET_CAPTUREPOLARITY(htim, channel, TIM_INPUTCHANNELPOLARITY_RISING);
-        PWM->Capture_count = 0;
-    }
+	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1 && isChannel1 )
+	{
+		PWM->icVal = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
 
-    PWM->Read_Flag = true;
+		if (PWM->icVal != 0)
+		{
+			PWM->PWM_width = (HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2) *100)/PWM->icVal;
+
+		}
+	}
+	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2 && !isChannel1 )
+	{
+		PWM->icVal = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
+
+		if (PWM->icVal != 0)
+		{
+			PWM->PWM_width = (HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1) *100)/PWM->icVal;
+
+		}
+	}
 }
