@@ -51,10 +51,14 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc, ADC
 		}
 	}
 
+	#if !(defined(STM32F2_FAMILY) || defined(STM32F4_FAMILY))
+
 	// launching calibration
-	if(HAL_ADCEx_Calibration_Start(hadc) != HAL_OK){
+	if(HAL_ADCEx_Calibration_Start(hadc, ADC_SINGLE_ENDED) != HAL_OK){
 		return HAL_ERROR;
 	}
+
+	#endif
 
 	// launching ADC
 	if(HAL_ADC_Start(hadc) != HAL_OK){
@@ -113,10 +117,14 @@ HAL_StatusTypeDef ADC_InitMultimode(ADC_HandleTypeDef* hadcMaster, ADC_BufferTyp
 		return HAL_ERROR;
 	}
 
+	// For F2 and F4 family Calibration function does not exist
+	#if !(defined(STM32F2_FAMILY) || defined(STM32F4_FAMILY))
+
 	// starting calibration
-	if(HAL_ADCEx_Calibration_Start(hadcMaster) != HAL_OK){
+	if(HAL_ADCEx_Calibration_Start(hadcMaster, ADC_SINGLE_ENDED) != HAL_OK){
 		return HAL_ERROR;
 	}
+	#endif
 
 	// launching dual mode conversion
 	if(HAL_ADCEx_MultiModeStart_DMA(hadcMaster, badc->ddma.BufferMultiMode, ADC_BUFF_SIZE) != HAL_OK){

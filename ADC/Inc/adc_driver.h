@@ -183,9 +183,6 @@ typedef struct{
 
 	#include "stm32f2xx.h"					// Including lib, which contains READ_REG and READ_BIT functions
 
-	#define  ADC_CCR_OFFSET 0x300			// CCR reg address offset from base ADC1 address
-
-
 	#define __ADC_IS_DMA_MULTIMODE(__HANDLE__) 																											\
 		    							    ((READ_BIT(ADC->CCR, ADC_CCR_MULTI) == 0U) ? 0U : 1U)
 
@@ -281,8 +278,8 @@ typedef struct{
 
 
 	/* Macros Function type for core of F3 family-------------------------------------- */
-	#define __ADC_IS_DMA_MULTIMODE(__HANDLE__)                                                          												\
-											(((READ_REG(*(volatile uint32_t *)(ADC1_BASE + ADC_CCR_OFFSET)) >> ADC_CCR_DUAL_Pos) & 0x1U) == 0U ? 0U : 1U)
+	#define __ADC_IS_DMA_MULTIMODE(__HANDLE__) \
+											((READ_BIT(*(volatile uint32_t *)(ADC1_BASE + ADC_CCR_OFFSET), ADC_CCR_DUAL_Msk) != 0U) ? 1U : 0U)
 
 	#define __ADC_IS_CONV_STARTED(__HANDLE__)                                               												\
 											(((((__HANDLE__)->Instance->CR >> ADC_CR_ADSTART_Pos) & 0x1U)))
@@ -375,9 +372,6 @@ typedef struct{
 #elif defined(STM32F4_FAMILY)
 
 	#include "stm32f4xx.h"					// Including lib, which contains READ_REG and READ_BIT functions
-
-	#define  ADC_CCR_OFFSET 0x300			// CCR reg address offset from base ADC1 address
-
 
 	/* Macros Function type for core of F4 family-------------------------------------- */
 	#define __ADC_IS_DMA_MULTIMODE(__HANDLE__) 																									\
