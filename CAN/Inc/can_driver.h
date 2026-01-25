@@ -1,12 +1,12 @@
 /**
-  * @file can_driver.h
-  * @brief CAN bus driver for PERLA
-  * @author AGH EKO-ENERGIA
-  * @author Kacper Lasota
-  */
+ * @file can_driver.h
+ * @brief CAN bus driver for PERLA
+ * @author AGH EKO-ENERGIA
+ * @author Kacper Lasota
+ */
 
-#ifndef INC_CAN_DRIVER_H_
-#define INC_CAN_DRIVER_H_
+#ifndef CAN_DRIVER_H
+#define CAN_DRIVER_H
 
 #include "main.h"
 #include "can_id_list.h"
@@ -16,45 +16,74 @@
  * Defines
  */
 
-#define CAN_MAX_DLC 8
-#define CAN_MAX_MSG 32
+#define CAN_MAX_DLC (8)
+#define CAN_MAX_MSG (32)
+
+/**
+ * @brief Generic macro to swap endianness based on variable type.~
+ * 
+ * Endiannes should be handlend in GetData function of every 
+ * * usage: 
+ * uint32_t val = 0x12345678;
+ * val = SWAP_ENDIANNESS(val); // Becomes 0x78563412
+ */
+#define SWAP_ENDIANNESS(x) _Generic((x),       \
+    uint8_t:  (x),                             \
+    int8_t:   (x),                             \
+    uint16_t: __builtin_bswap16(x),                  \
+    int16_t:  __builtin_bswap16(x),                  \
+    uint32_t: __builtin_bswap32(x),                  \
+    int32_t:  __builtin_bswap32(x),                  \
+    uint64_t: __builtin_bswap64(x),                  \
+    int64_t:  __builtin_bswap64(x)                   \
+)
 
 /**
  * Periodic CAN message
  */
-typedef struct {
-	CAN_TxHeaderTypeDef header;							// frame header
-	uint32_t 			period_ms;						// period of this message
-	uint32_t 			last_tick;						// time stamp of the last message
-	void 				(*GetData)(uint8_t *data);		// fetches data
-}CAN_ScheduledMsg;
+struct CAN_scheduledMsg
+{
+	CAN_TxHeaderTypeDef header;     // frame header
+	uint32_t periodMs;              // period of this message
+	uint32_t lastTick;              // time stamp of the last message
+	void (*getData)(uint8_t *data, void *context); // fetches data
+	void *context;                  // user callback context
+};
 
 /**
  * Periodic CAN message list used for automation
  */
-typedef struct {
-	CAN_ScheduledMsg list[CAN_MAX_MSG];
+struct CAN_scheduledMsgList
+{
+	struct CAN_scheduledMsg list[CAN_MAX_MSG];
 	uint8_t size;
 	uint32_t txMailbox;
-}CAN_ScheduledMsgList;
+};
 
 /**
  * Setup functions
  */
-void CAN_Init(CAN_HandleTypeDef*);
+
+/**
+ * @brief Initialize CAN
+ *
+ * This function initializes the CAN peripheral.
+ *
+ * @param hcan      Pointer to CAN handle
+ */
+void CAN_init(CAN_HandleTypeDef *hcan);
+
+/**
+ * @brief Get configured Node ID
+ * @return Current Node ID
+ */
+uint32_t CAN_getNodeId(void);
 
 /**
  * Functions for scheduled messages
  */
-HAL_StatusTypeDef CAN_AddScheduledMessage(CAN_ScheduledMsg, CAN_ScheduledMsgList*);
-HAL_StatusTypeDef CAN_RemoveScheduledMessage(uint32_t, CAN_ScheduledMsgList*);
+HAL_StatusTypeDef CAN_addScheduledMessage(struct CAN_scheduledMsg msg, struct CAN_scheduledMsgList *buffer);
 
-void CAN_HandleScheduled(CAN_HandleTypeDef *hcan, CAN_ScheduledMsgList*);
-
-/**
- * Functions for received messages
- */
-void CAN_HandleReceived(CAN_HandleTypeDef *hcan, uint8_t fifo);
-
+HAL_StatusTypeDef CAN_removeScheduledMessage(uint32_t id, struct CAN_scheduledMsgList *buffer);
 
 #endif /* INC_CAN_DRIVER_H_ */
