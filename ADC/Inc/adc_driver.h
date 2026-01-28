@@ -480,5 +480,8 @@ HAL_StatusTypeDef          ADC_GetRank(ADC_ChannelsTypeDef *cadc, uint8_t channe
 
 HAL_StatusTypeDef          ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc, ADC_ChannelsTypeDef* cadc, uint8_t channel , uint16_t* retval);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INC_ADC_DRIVER_H_ */
