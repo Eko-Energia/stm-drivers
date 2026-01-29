@@ -1,3 +1,10 @@
+/**
+  * @file pwm_driver.h
+  * @brief PWM signal driver for PERLA
+  * @author AGH EKO-ENERGIA
+  * @author Andrzej Gondek
+  */
+
 #ifndef PWM_SIGNAL_H
 #define PWM_SIGNAL_H
 
@@ -5,18 +12,24 @@
 #include <math.h>
 #include <stdbool.h>
 
-
-typedef struct {
-    uint32_t Frequency;
-    float PWM_Width;
-    bool Read_Flag;
-    volatile uint32_t IC_Val1;
-    volatile uint32_t IC_Val2;
-    volatile uint8_t Capture_count;
-    float Widths[5];
-} PWM_Signal;
-
-void PWM_Initialize(PWM_Signal* signal, int frequency);
-void PWM_Update(TIM_HandleTypeDef *htim, PWM_Signal *PWM, uint32_t channel);
+/**
+ * PWM signal
+ */
+struct PWM_signal {
+    uint32_t frequency;
+    volatile float PWM_width;
+    volatile bool readFlag;
+    volatile uint32_t icVal;
+    bool ch1;
+    TIM_IC_InitTypeDef sConfigIC;
+};
+/**
+ * PWM signal setup
+ */
+void PWM_initialize(struct PWM_signal* signal, int frequency, bool isChannel1,TIM_HandleTypeDef *htim);
+/**
+ * Computes PWM parameters, to be used within HAL_TIM_IC_CaptureCallback
+ */
+void PWM_update(TIM_HandleTypeDef *htim, struct PWM_signal *PWM, bool isChannel1);
 
 #endif /* PWM_SIGNAL_H */
