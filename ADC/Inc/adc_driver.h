@@ -180,8 +180,11 @@ typedef struct{
 #elif defined(STM32F2_FAMILY)
 
 	/* Macros Function type for core of F2 family-------------------------------------- */
-	#define __ADC_IS_DMA_MULTIMODE                                                          												\
-											((READ_REG(ADC_COMMON->CCR, ADC_CCR_MULTI_Msk) == ADC_CCR_MULTI_0) ? 0U : 1U)
+
+	#include "stm32f2xx.h"					// Including lib, which contains READ_REG and READ_BIT functions
+
+	#define __ADC_IS_DMA_MULTIMODE(__HANDLE__) 																											\
+		    							    ((READ_BIT(ADC->CCR, ADC_CCR_MULTI) == 0U) ? 0U : 1U)
 
 	#define __ADC_IS_CONV_STARTED(__HANDLE__)                                               												\
 											(((((__HANDLE__)->Instance->SR) >> ADC_SR_STRT_Pos) & 0x1U))
@@ -195,7 +198,7 @@ typedef struct{
 											 ((((__HANDLE__)->Instance->CR1 >> ADC_CR1_RES_Pos) & 0b11) == 0b10) ? 255U  : 63U )
 
 	#define __ADC_DMA_MODE(__HANDLE__)                                                      												\
-											((((__HANDLE__)->DMA_Handle->Instance->CCR >> DMA_CCR_CIRC_Pos) & 0x1U))
+											(((__HANDLE__)->DMA_Handle->Init.Mode == DMA_NORMAL) ? 0U : 1U)
 
 	#define __ADC_EOC(__HANDLE__)                                                           												\
 											((((__HANDLE__)->Instance->SR >> ADC_SR_EOC_Pos) & 0x1U))
@@ -269,9 +272,14 @@ typedef struct{
 
 #elif defined(STM32F3_FAMILY)
 
+	#include "stm32f3xx.h"			// Including lib, which contains READ_REG and READ_BIT functions
+
+	#define  ADC_CCR_OFFSET 0x300	// CCR reg address offset from base ADC1 address
+
+
 	/* Macros Function type for core of F3 family-------------------------------------- */
-	#define __ADC_IS_DMA_MULTIMODE                                                          												\
-											((READ_REG(ADC_COMMON->CCR, ADC12_CCR_MULTI_Msk) == 0U) ? 0U : 1U)
+	#define __ADC_IS_DMA_MULTIMODE(__HANDLE__) \
+											((READ_BIT(*(volatile uint32_t *)(ADC1_BASE + ADC_CCR_OFFSET), ADC_CCR_DUAL_Msk) != 0U) ? 1U : 0U)
 
 	#define __ADC_IS_CONV_STARTED(__HANDLE__)                                               												\
 											(((((__HANDLE__)->Instance->CR >> ADC_CR_ADSTART_Pos) & 0x1U)))
@@ -363,9 +371,11 @@ typedef struct{
 
 #elif defined(STM32F4_FAMILY)
 
+	#include "stm32f4xx.h"					// Including lib, which contains READ_REG and READ_BIT functions
+
 	/* Macros Function type for core of F4 family-------------------------------------- */
-	#define __ADC_IS_DMA_MULTIMODE                                                          												\
-											((READ_REG(ADC_COMMON->CCR, ADC_CCR_MULTI_Msk) == ADC_CCR_MULTI_0) ? 0U : 1U)
+	#define __ADC_IS_DMA_MULTIMODE(__HANDLE__) 																									\
+		    							    ((READ_BIT(ADC->CCR, ADC_CCR_MULTI) == 0U) ? 0U : 1U)
 
 	#define __ADC_IS_CONV_STARTED(__HANDLE__)                                               												\
 											(((((__HANDLE__)->Instance->SR) >> ADC_SR_STRT_Pos) & 0x1U))
@@ -379,7 +389,7 @@ typedef struct{
 											 ((((__HANDLE__)->Instance->CR1 >> ADC_CR1_RES_Pos) & 0b11) == 0b10) ? 255U  : 63U )
 
 	#define __ADC_DMA_MODE(__HANDLE__)                                                      												\
-											((((__HANDLE__)->DMA_Handle->Instance->CR >> DMA_SxCR_CIRC_Pos) & 0x1U))
+											(((__HANDLE__)->DMA_Handle->Init.Mode == DMA_NORMAL) ? 0U : 1U)
 
 	#define __ADC_EOC(__HANDLE__)                                                           												\
 											((((__HANDLE__)->Instance->SR >> ADC_SR_EOC_Pos) & 0x1U))
@@ -470,5 +480,8 @@ HAL_StatusTypeDef          ADC_GetRank(ADC_ChannelsTypeDef *cadc, uint8_t channe
 
 HAL_StatusTypeDef          ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc, ADC_ChannelsTypeDef* cadc, uint8_t channel , uint16_t* retval);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INC_ADC_DRIVER_H_ */
