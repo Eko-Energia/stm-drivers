@@ -80,6 +80,11 @@ void CAN_init(CAN_HandleTypeDef *hcan);
 uint32_t CAN_getNodeId(void);
 
 /**
+ * @brief Process all scheduled CAN messages (call in main loop)
+ */
+void CAN_handleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList *scheduler)
+
+/**
  * Functions for scheduled messages
  */
 HAL_StatusTypeDef CAN_addScheduledMessage(struct CAN_scheduledMsg msg, struct CAN_scheduledMsgList *buffer);
