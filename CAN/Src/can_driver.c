@@ -56,6 +56,7 @@ void CAN_init(CAN_HandleTypeDef *hcanPtr)
 	{
 		Error_Handler();
 	}
+}
 
 /**
  * @brief Add new message to the periodic buffer
