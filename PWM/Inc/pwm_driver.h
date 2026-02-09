@@ -30,6 +30,6 @@ void PWM_initialize(struct PWM_signal* signal, int frequency, bool isChannel1,TI
 /**
  * Computes PWM parameters, to be used within HAL_TIM_IC_CaptureCallback
  */
-void PWM_update(TIM_HandleTypeDef *htim, struct PWM_signal *PWM, bool isChannel1);
+void PWM_update(TIM_HandleTypeDef *htim, struct PWM_signal *PWM);
 
 #endif /* PWM_SIGNAL_H */
