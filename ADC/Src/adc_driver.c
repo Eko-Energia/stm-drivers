@@ -217,11 +217,6 @@ HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsTypeDef* 
 				// getting converted value
 				value = HAL_ADCEx_MultiModeGetValue(hadc);
 
-				// checking if converted value is valid
-				if(value < 0){
-					 return HAL_ERROR;
-				}
-
 				// overwriting value in buffer only if process of reading from given channel is executed
 				if(i == rank){
 					value = HAL_ADCEx_MultiModeGetValue(hadc);
