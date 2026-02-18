@@ -218,7 +218,7 @@ HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsTypeDef* 
 				value = HAL_ADCEx_MultiModeGetValue(hadc);
 
 				// checking if converted value is valid
-				if(value > __ADC_RESOLUTION(hadc) || value < 0){
+				if(value < 0){
 					 return HAL_ERROR;
 				}
 
