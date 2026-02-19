@@ -281,11 +281,12 @@ typedef struct{
 	#define __ADC_IS_DMA_MULTIMODE(__HANDLE__) \
 											((READ_BIT(*(volatile uint32_t *)(ADC1_BASE + ADC_CCR_OFFSET), ADC_CCR_DUAL_Msk) != 0U) ? 1U : 0U)
 
-	#define __ADC_IS_CONV_STARTED(__HANDLE__)                                               												\
+	#define __ADC_IS_CONV_STARTED(__HANDLE__) \
 											(((((__HANDLE__)->Instance->CR >> ADC_CR_ADSTART_Pos) & 0x1U)))
 
-	#define __ADC_IS_DMA_ENABLED(__HANDLE__)                                                												\
-											((READ_BIT((__HANDLE__)->Instance->CFGR, ADC_CFGR_DMAEN)))
+	#define __ADC_IS_DMA_ENABLED(__HANDLE__) \
+											((READ_BIT((__HANDLE__)->Instance->CFGR, ADC_CFGR_DMAEN)) ||                  									\
+											(READ_BIT(((ADC_Common_TypeDef *)((uint32_t)(__HANDLE__)->Instance + ADC_CCR_OFFSET))->CCR, ADC_CCR_MDMA)) )
 
 	#define __ADC_RESOLUTION(__HANDLE__)                                                    												\
 											(((((__HANDLE__)->Instance->CFGR >> ADC_CFGR_RES_Pos) & 0b11) == 0b00) ? 4095U : 			    \
