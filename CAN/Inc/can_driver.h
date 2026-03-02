@@ -38,6 +38,8 @@
     int64_t:  __builtin_bswap64(x)                   \
 )
 
+#define GET_BYTE(x, n) ((uint8_t)((x) >> ((n) * 8)) & 0xFF)
+
 /**
  * Periodic CAN message
  */
