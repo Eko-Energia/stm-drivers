@@ -38,7 +38,14 @@
     int64_t:  __builtin_bswap64(x)                   \
 )
 
-#define GET_BYTE(x, n) ((uint8_t)((x) >> ((n) * 8)) & 0xFF)
+/**
+ * @brief Extracts the n-th byte from variable x.
+ * @warning Do not pass expressions with side effects (e.g., x++) as arguments,
+ * as they may be evaluated multiple times.
+ * @param x The source variable (uint8_t, uint16_t, or uint32_t).
+ * @param n The byte index (0 for LSB).
+ */
+#define GET_BYTE(x, n) ((uint8_t)(((x) >> ((n) * 8u)) & 0xFFu))
 
 /**
  * Periodic CAN message
