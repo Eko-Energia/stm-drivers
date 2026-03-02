@@ -84,7 +84,7 @@ uint32_t CAN_getNodeId(void);
 /**
  * @brief Process all scheduled CAN messages (call in main loop)
  */
-void CAN_handleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList *scheduler)
+void CAN_handleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList *scheduler);
 
 /**
  * Functions for scheduled messages
