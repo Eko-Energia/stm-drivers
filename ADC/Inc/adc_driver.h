@@ -282,7 +282,7 @@ typedef struct{
 
 	/* Macros Function type for core of F3 family-------------------------------------- */
 	#define __ADC_IS_DMA_MULTIMODE(__HANDLE__) \
-											((READ_BIT(*(volatile uint32_t *)(ADC1_BASE + ADC_CCR_OFFSET), ADC_CCR_DUAL_Msk) != 0U) ? 1U : 0U)
+											((ADC1_2_COMMON->CCR & ADC_CCR_DUAL) != 0U ? 1U : 0U)
 
 	#define __ADC_IS_CONV_STARTED(__HANDLE__) \
 											(((((__HANDLE__)->Instance->CR >> ADC_CR_ADSTART_Pos) & 0x1U)))
