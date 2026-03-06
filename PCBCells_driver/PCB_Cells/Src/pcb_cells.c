@@ -136,7 +136,7 @@ HAL_StatusTypeDef PCBCells_Mode_Error(PCBCells_TypeDef* pc){
 HAL_StatusTypeDef PCBCells_Peripherals_Start(PCBCells_TypeDef* pc){
 
 	// Launching Dual Mode Conversion
-	if(HAL_ADCEx_MultiModeStart_DMA(&pc->pcadc.hadc1, (uint32_t*)pc->pcadc.badc1.ddma.BufferADC_Master, ADC_MAX_CHANNELS) != HAL_OK){
+	if(HAL_ADCEx_MultiModeStart_DMA(&pc->pcadc.hadc1, (uint32_t*)pc->pcadc.badc1.ddma.BufferADC_Master, ADC_BUFF_SIZE) != HAL_OK){
 		return HAL_ERROR;
 	}
 

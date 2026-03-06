@@ -1,0 +1,15 @@
+# ninja log v6
+71	1462	7940602133439643	_deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/src/gtest_main.cc.obj	dc92362c86ca502c
+71	1450	7945110015486891	Tests/CMakeFiles/unit_tests.dir/unit/test_main.cpp.obj	42e9afa575d7e555
+306	1915	7940602135769374	_deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/src/gmock_main.cc.obj	a7ea48fa61187a4d
+248	453	7940663625213825	lib/gtest_main.lib	688813a56d511449
+50	3230	7940602133122557	_deps/googletest-build/googlemock/CMakeFiles/gmock.dir/src/gmock-all.cc.obj	88db31b659bc2076
+24	5929	7940602132964864	_deps/googletest-build/googletest/CMakeFiles/gtest.dir/src/gtest-all.cc.obj	f5e3524ec9db9d9
+89	1653	7940604140957742	lib/gtest.lib	a8acf78e40250a23
+238	461	7940663625113178	lib/gmock.lib	b9d629bc881e512d
+302	652	7941054929648746	lib/gmock_main.lib	30ad13d7ac784552
+154	291	7945117160048554	Tests/CMakeFiles/unit_tests.dir/mocks/Src/stm32f3xx_hal_gpio_mock.c.obj	753644fdf3a90e6e
+178	302	7945117160256746	Tests/CMakeFiles/unit_tests.dir/mocks/Src/stm32f3xx_hal_adc_mock.c.obj	317a90ef8e1bf278
+205	325	7945117160593714	Tests/CMakeFiles/unit_tests.dir/mocks/Src/stm32f3xx_hal_can_mock.c.obj	a63410a0cbeaee2e
+233	350	7945117160873654	Tests/CMakeFiles/unit_tests.dir/mocks/Src/stm32f3xx_hal_dma_mock.c.obj	fe7234cbbb958f59
+261	376	7945117161087696	Tests/CMakeFiles/unit_tests.dir/mocks/Src/stm32f3xx_hal_rcc_mock.c.obj	70f74e4bf78e2593

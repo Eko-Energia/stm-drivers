@@ -36,12 +36,13 @@ extern "C" {
 #define 			SQR_3				    3
 #define				SQR_4					4
 
-#define 			ADC_MAX_CHANNELS       5											// maximum number of ADC's channels
+#define 			ADC_MAX_CHANNELS       16											// maximum number of ADC's channels
 #define 			ADC_AVERAGED_MEASURES  5											// common number of measures from one channel to be averaged
 #define 			ADC_BUFF_SIZE 		   (ADC_AVERAGED_MEASURES * ADC_MAX_CHANNELS)	// ADC Buffers' Size, includes size of all channels and their number of averaged measures
 
 /* Variables--------------------------------------------------------------------------- */
 static volatile int ADC_CONVERTED_CHANNELS =  4;	// default value of converted which will be overwrite by program in runtime after auto-detect process
+extern volatile int ADC_MULTIMODE__DMA_ENABLED;  	// variable which stores info about DMA in dual mode conversion, its value will be returned in case firmware calls for __ADC_DMA_ENABLED with passing slave instance of ADC
 
 
 
@@ -97,7 +98,8 @@ typedef struct{
 											(((((__HANDLE__)->Instance->SR)       >> ADC_SR_STRT_Pos ) & 0x1U))
 
 	#define __ADC_IS_DMA_ENABLED(__HANDLE__)                                                												\
-											((((__HANDLE__)->DMA_Handle == NULL)   ? 0 : 1))
+											(((__HANDLE__)->Instance != ADC1 && __ADC_IS_DMA_MULTIMODE(__HANDLE__) == 1U)? 				    \
+											ADC_MULTIMODE__DMA_ENABLED : (((__HANDLE__)->DMA_Handle == NULL)   ? 0U : 1U))
 
 	#define __ADC_RESOLUTION(__HANDLE__)                                                    												\
 											(4095U)
@@ -179,24 +181,27 @@ typedef struct{
 
 #elif defined(STM32F2_FAMILY)
 
-#include "stm32f2xx.h"
 	/* Macros Function type for core of F2 family-------------------------------------- */
-	#define __ADC_IS_DMA_MULTIMODE                                                          												\
-											((READ_REG(ADC_COMMON->CCR, ADC_CCR_MULTI_Msk) == ADC_CCR_MULTI_0) ? 0U : 1U)
+
+	#include "stm32f2xx.h"					// Including lib, which contains READ_REG and READ_BIT functions
+
+	#define __ADC_IS_DMA_MULTIMODE(__HANDLE__) 																								\
+		    							    ((READ_BIT(ADC->CCR, ADC_CCR_MULTI) == 0U) ? 0U : 1U)
 
 	#define __ADC_IS_CONV_STARTED(__HANDLE__)                                               												\
 											(((((__HANDLE__)->Instance->SR) >> ADC_SR_STRT_Pos) & 0x1U))
 
 	#define __ADC_IS_DMA_ENABLED(__HANDLE__)                                                												\
-											(((((__HANDLE__)->Instance->CR2) >> ADC_CR2_DMA_Pos) & 0x1U))
+											(((__HANDLE__)->Instance != ADC1 && __ADC_IS_DMA_MULTIMODE(__HANDLE__) == 1U)?					\
+											ADC_MULTIMODE__DMA_ENABLED : ((((__HANDLE__)->Instance->CR2) >> ADC_CR2_DMA_Pos) & 0x1U))
 
 	#define __ADC_RESOLUTION(__HANDLE__)                                                    												\
-											(((((__HANDLE__)->Instance->CR1 >> ADC_CR1_RES_Pos) & 0b11) == 0b00) ? 4095U : 				    \
-											 ((((__HANDLE__)->Instance->CR1 >> ADC_CR1_RES_Pos) & 0b11) == 0b01) ? 1023U : 				    \
-											 ((((__HANDLE__)->Instance->CR1 >> ADC_CR1_RES_Pos) & 0b11) == 0b10) ? 255U  : 63U )
+											(((((__HANDLE__)->Instance->CR1 >> ADC_CR1_RES_Pos) & 0x3) == 0x0) ? 4095U : 				    \
+											 ((((__HANDLE__)->Instance->CR1 >> ADC_CR1_RES_Pos) & 0x3) == 0x1) ? 1023U : 				    \
+											 ((((__HANDLE__)->Instance->CR1 >> ADC_CR1_RES_Pos) & 0x3) == 0x2) ? 255U  : 63U )
 
 	#define __ADC_DMA_MODE(__HANDLE__)                                                      												\
-											((((__HANDLE__)->DMA_Handle->Instance->CCR >> DMA_CCR_CIRC_Pos) & 0x1U))
+											(((__HANDLE__)->DMA_Handle->Init.Mode == DMA_NORMAL) ? 0U : 1U)
 
 	#define __ADC_EOC(__HANDLE__)                                                           												\
 											((((__HANDLE__)->Instance->SR >> ADC_SR_EOC_Pos) & 0x1U))
@@ -276,27 +281,29 @@ typedef struct{
 
 
 	/* Macros Function type for core of F3 family-------------------------------------- */
-	#define __ADC_IS_DMA_MULTIMODE(__HANDLE__)                                                          												\
-											(((READ_REG((ADC1_BASE + ADC_CCR_OFFSET) >> ADC_CCR_DUAL_Pos) & 0x1U) == 0U) ? 0U : 1U)
+	#define __ADC_IS_DMA_MULTIMODE(__HANDLE__) \
+											((ADC1_2_COMMON->CCR & ADC_CCR_DUAL) != 0U ? 1U : 0U)
 
-	#define __ADC_IS_CONV_STARTED(__HANDLE__)                                               												\
+	#define __ADC_IS_CONV_STARTED(__HANDLE__) \
 											(((((__HANDLE__)->Instance->CR >> ADC_CR_ADSTART_Pos) & 0x1U)))
 
-	#define __ADC_IS_DMA_ENABLED(__HANDLE__)                                                												\
-											((READ_BIT((__HANDLE__)->Instance->CFGR, ADC_CFGR_DMAEN)))
+	#define __ADC_IS_DMA_ENABLED(__HANDLE__) \
+											(((__HANDLE__)->Instance != ADC1 && __ADC_IS_DMA_MULTIMODE(__HANDLE__) == 1U)?									\
+											ADC_MULTIMODE__DMA_ENABLED: ((READ_BIT((__HANDLE__)->Instance->CFGR, ADC_CFGR_DMAEN)) ||                 		\
+											(READ_BIT(((ADC_Common_TypeDef *)((uint32_t)(__HANDLE__)->Instance + ADC_CCR_OFFSET))->CCR, ADC_CCR_MDMA))))
 
-	#define __ADC_RESOLUTION(__HANDLE__)                                                    												\
-											(((((__HANDLE__)->Instance->CFGR >> ADC_CFGR_RES_Pos) & 0b11) == 0b00) ? 4095U : 			    \
-											 ((((__HANDLE__)->Instance->CFGR >> ADC_CFGR_RES_Pos) & 0b11) == 0b01) ? 1023U : 			    \
-											 ((((__HANDLE__)->Instance->CFGR >> ADC_CFGR_RES_Pos) & 0b11) == 0b10) ? 255U  : 63U )
+	#define __ADC_RESOLUTION(__HANDLE__)                                                    																\
+											(((((__HANDLE__)->Instance->CFGR >> ADC_CFGR_RES_Pos) & 0x3) == 0x0) ? 4095U : 			    					\
+											 ((((__HANDLE__)->Instance->CFGR >> ADC_CFGR_RES_Pos) & 0x3) == 0x1) ? 1023U : 			    					\
+											 ((((__HANDLE__)->Instance->CFGR >> ADC_CFGR_RES_Pos) & 0x3) == 0x2) ? 255U  : 63U )
 
-	#define __ADC_DMA_MODE(__HANDLE__)                                                      												\
+	#define __ADC_DMA_MODE(__HANDLE__)                                                      																\
 											(((((__HANDLE__)->Instance->CFGR >> ADC_CFGR_DMACFG_Pos) & 0x1U)))
 
-	#define __ADC_EOC(__HANDLE__)                                                           												\
+	#define __ADC_EOC(__HANDLE__)                                                           																\
 											((((__HANDLE__)->Instance->ISR >> ADC_ISR_EOC_Pos) & 0x1U))
 
-	#define __ADC_MODE(__HANDLE__)                                                          												\
+	#define __ADC_MODE(__HANDLE__)                                                          																\
 											((((__HANDLE__)->Instance->CFGR >> ADC_CFGR_CONT_Pos) & 0x1U))
 
 	// ====================================================================
@@ -369,23 +376,27 @@ typedef struct{
 
 #elif defined(STM32F4_FAMILY)
 
+	#include "stm32f4xx.h"					// Including lib, which contains READ_REG and READ_BIT functions
+
 	/* Macros Function type for core of F4 family-------------------------------------- */
-	#define __ADC_IS_DMA_MULTIMODE                                                          												\
-											((READ_REG(ADC_COMMON->CCR, ADC_CCR_MULTI_Msk) == ADC_CCR_MULTI_0) ? 0U : 1U)
+	#define __ADC_IS_DMA_MULTIMODE(__HANDLE__) 																								\
+		    							    ((READ_BIT(ADC->CCR, ADC_CCR_MULTI) == 0U) ? 0U : 1U)
 
 	#define __ADC_IS_CONV_STARTED(__HANDLE__)                                               												\
 											(((((__HANDLE__)->Instance->SR) >> ADC_SR_STRT_Pos) & 0x1U))
 
 	#define __ADC_IS_DMA_ENABLED(__HANDLE__)                                                												\
-											(((((__HANDLE__)->Instance->CR2) >> ADC_CR2_DMA_Pos) & 0x1U))
+											(((__HANDLE__)->Instance != ADC1 && __ADC_IS_DMA_MULTIMODE(__HANDLE__) == 1)?					\
+											ADC_MULTIMODE__DMA_ENABLED: ((((__HANDLE__)->Instance->CR2) >> ADC_CR2_DMA_Pos) & 0x1U))
+
 
 	#define __ADC_RESOLUTION(__HANDLE__)                                                    												\
-											(((((__HANDLE__)->Instance->CR1 >> ADC_CR1_RES_Pos) & 0b11) == 0b00) ? 4095U : 				    \
-											 ((((__HANDLE__)->Instance->CR1 >> ADC_CR1_RES_Pos) & 0b11) == 0b01) ? 1023U : 				    \
-											 ((((__HANDLE__)->Instance->CR1 >> ADC_CR1_RES_Pos) & 0b11) == 0b10) ? 255U  : 63U )
+											(((((__HANDLE__)->Instance->CR1 >> ADC_CR1_RES_Pos) & 0x3) == 0x0) ? 4095U : 				    \
+											 ((((__HANDLE__)->Instance->CR1 >> ADC_CR1_RES_Pos) & 0x3) == 0x1) ? 1023U : 				    \
+											 ((((__HANDLE__)->Instance->CR1 >> ADC_CR1_RES_Pos) & 0x3) == 0x2) ? 255U  : 63U )
 
 	#define __ADC_DMA_MODE(__HANDLE__)                                                      												\
-											((((__HANDLE__)->DMA_Handle->Instance->CR >> DMA_SxCR_CIRC_Pos) & 0x1U))
+											(((__HANDLE__)->DMA_Handle->Init.Mode == DMA_NORMAL) ? 0U : 1U)
 
 	#define __ADC_EOC(__HANDLE__)                                                           												\
 											((((__HANDLE__)->Instance->SR >> ADC_SR_EOC_Pos) & 0x1U))
@@ -461,7 +472,7 @@ typedef struct{
 #endif
 
 
-/* Functions Prototypes --------------------------------------------------------------------  */
+/* Public Functions' Prototypes --------------------------------------------------------------------  */
 HAL_StatusTypeDef          ADC_Init(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc, ADC_ChannelsTypeDef* cadc);
 
 HAL_StatusTypeDef          ADC_InitMultimode(ADC_HandleTypeDef* hadcMaster, ADC_BufferTypeDef* badc);
@@ -470,11 +481,8 @@ HAL_StatusTypeDef          ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_Channels
 
 __weak HAL_StatusTypeDef   ADC_GetValue(ADC_HandleTypeDef* hadc, ADC_ChannelsTypeDef* cadc, ADC_BufferTypeDef* badc, float max, uint8_t channel, float * retval);
 
-HAL_StatusTypeDef          ADC_ConfigGetRanksOfChannels(ADC_HandleTypeDef* hadc, ADC_ChannelsTypeDef* cadc, ADC_BufferTypeDef* badc);
-
-HAL_StatusTypeDef          ADC_GetRank(ADC_ChannelsTypeDef *cadc, uint8_t channel, uint8_t* rank);
-
-HAL_StatusTypeDef          ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc, ADC_ChannelsTypeDef* cadc, uint8_t channel , uint16_t* retval);
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INC_ADC_DRIVER_H_ */
