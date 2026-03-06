@@ -13,7 +13,16 @@ Directory contains source and header files, which were build to help others in w
 Application:
 To ensure that code won't blow HardFault, please call Init function when working with ADC. Note that, when dual mode is need, call Init_Multimode function in Init function of ADC Slave (MX_ADC_Init)
 
-Files listing: 1. Inc/adc_driver.h - function prototypes, macros, structs 2. Inc/stm32_family.h - macros of stm32 families definition 3. Src/adc_driver.c - functions' bodies, variables' definitions
+Files listing: 
+    1. Inc/adc_driver.h - function prototypes, macros, structs 
+    2. Inc/stm32_family.h - macros of stm32 families definition 
+    3. Src/adc_driver.c - functions' bodies, variables' definitions
+
+Available functions:
+    1. ADC_Init          - initialization function for exact ADC, auto calibration is provided
+    2. ADC_InitMultimode - initialization dual mode conversion, auto calibration is provided
+    3. ADC_ReadChannel   - functions that supports reading binary representation of converted analog value
+    4. ADC_GetValue      - functions that provides reading and calculating real (float) value of given parameter via math operation with provided max value of exact parameter  
 
 Status:
 General:
