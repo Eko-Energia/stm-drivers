@@ -18,7 +18,8 @@
 
 #include "adc_driver.h"
 
-/* Private variables ---------------------------------------------------------*/
+/* Variables ---------------------------------------------------------*/
+volatile int ADC_MULTIMODE__DMA_ENABLED = 0;  										// Variable which stores info about DMA in dual mode conversion, its value will be returned in case firmware calls for __ADC_DMA_ENABLED with passing slave instance of ADC
 
 // Container of ADC ranks to return rank's register while number of rank is given
 static 			uint32_t ADC_RANKS_REGS[16] = {
@@ -160,14 +161,14 @@ static HAL_StatusTypeDef ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_BufferTypeDe
 
 			// Extracting ADC1 values from dual mode buffer
 			for(int  i = 0 ; i < ADC_BUFF_SIZE ; ++i){
-				badc->ddma.BufferADC_Master[i] = (uint16_t)((badc->ddma.BufferMultiMode[i] >> 16));
+				badc->ddma.BufferADC_Master[i] = (uint16_t)((badc->ddma.BufferMultiMode[i]));
 			}
 
 		}else{
 
 			// Extracting ADC2 values from dual mode buffer
 			for(int  i = 0 ; i < ADC_BUFF_SIZE ; ++i){
-				badc->ddma.BufferADC_Slave[i] = (uint16_t)((badc->ddma.BufferMultiMode[i]));
+				badc->ddma.BufferADC_Slave[i] = (uint16_t)((badc->ddma.BufferMultiMode[i] >> 16));
 			}
 
 		}

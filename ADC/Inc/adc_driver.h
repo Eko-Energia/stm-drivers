@@ -42,7 +42,7 @@ extern "C" {
 
 /* Variables--------------------------------------------------------------------------- */
 static volatile int ADC_CONVERTED_CHANNELS =  4;	// default value of converted which will be overwrite by program in runtime after auto-detect process
-static volatile int ADC_MULTIMODE__DMA_ENABLED  =  0;	// variable which stores info about DMA in dual mode conversion, its value will be returned in case firmware calls for __ADC_DMA_ENABLED with passing slave instance of ADC
+extern volatile int ADC_MULTIMODE__DMA_ENABLED;  	// variable which stores info about DMA in dual mode conversion, its value will be returned in case firmware calls for __ADC_DMA_ENABLED with passing slave instance of ADC
 
 
 
@@ -289,8 +289,8 @@ typedef struct{
 
 	#define __ADC_IS_DMA_ENABLED(__HANDLE__) \
 											(((__HANDLE__)->Instance != ADC1 && __ADC_IS_DMA_MULTIMODE(__HANDLE__) == 1U)?									\
-											ADC_MULTIMODE__DMA_ENABLED: (READ_BIT((__HANDLE__)->Instance->CFGR, ADC_CFGR_DMAEN)) ||                 		\
-											(READ_BIT(((ADC_Common_TypeDef *)((uint32_t)(__HANDLE__)->Instance + ADC_CCR_OFFSET))->CCR, ADC_CCR_MDMA)))
+											ADC_MULTIMODE__DMA_ENABLED: ((READ_BIT((__HANDLE__)->Instance->CFGR, ADC_CFGR_DMAEN)) ||                 		\
+											(READ_BIT(((ADC_Common_TypeDef *)((uint32_t)(__HANDLE__)->Instance + ADC_CCR_OFFSET))->CCR, ADC_CCR_MDMA))))
 
 	#define __ADC_RESOLUTION(__HANDLE__)                                                    																\
 											(((((__HANDLE__)->Instance->CFGR >> ADC_CFGR_RES_Pos) & 0x3) == 0x0) ? 4095U : 			    					\
