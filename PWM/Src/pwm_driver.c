@@ -56,10 +56,14 @@ void PWM_initialize(struct PWM_signal* signal,
     if (isChannel1)
     {
         HAL_TIM_IC_ConfigChannel(htim, &signal->sConfigIC, TIM_CHANNEL_1);
+        HAL_TIM_IC_Start_IT(htim, TIM_CHANNEL_1);
+        HAL_TIM_IC_Start(htim, TIM_CHANNEL_2);
     }
     else
     {
         HAL_TIM_IC_ConfigChannel(htim, &signal->sConfigIC, TIM_CHANNEL_2);
+        HAL_TIM_IC_Start_IT(htim, TIM_CHANNEL_2);
+        HAL_TIM_IC_Start(htim, TIM_CHANNEL_1);
     }
 }
 
