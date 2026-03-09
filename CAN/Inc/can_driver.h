@@ -39,6 +39,15 @@
 )
 
 /**
+ * @brief Extracts the n-th byte from variable x.
+ * @warning Do not pass expressions with side effects (e.g., x++) as arguments,
+ * as they may be evaluated multiple times.
+ * @param x The source variable (uint8_t, uint16_t, or uint32_t).
+ * @param n The byte index (0 for LSB).
+ */
+#define GET_BYTE(x, n) ((uint8_t)(((x) >> ((n) * 8u)) & 0xFFu))
+
+/**
  * Periodic CAN message
  */
 struct CAN_scheduledMsg
@@ -82,7 +91,7 @@ uint32_t CAN_getNodeId(void);
 /**
  * @brief Process all scheduled CAN messages (call in main loop)
  */
-void CAN_handleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList *scheduler)
+void CAN_handleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList *scheduler);
 
 /**
  * Functions for scheduled messages
