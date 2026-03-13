@@ -17,7 +17,7 @@
  */
 struct PWM_signal {
     uint32_t frequency;
-    volatile float PWM_width;
+    volatile float width;
     volatile bool readFlag;
     volatile uint32_t icVal;
     bool ch1;
@@ -31,5 +31,8 @@ void PWM_initialize(struct PWM_signal* signal, int frequency, bool isChannel1,TI
  * Computes PWM parameters, to be used within HAL_TIM_IC_CaptureCallback
  */
 void PWM_update(TIM_HandleTypeDef *htim, struct PWM_signal *PWM);
-
+/**
+ * Set PWM signal width
+ */
+void PWM_setWidth(TIM_HandleTypeDef *htim, uint32_t Channel, float width);
 #endif /* PWM_SIGNAL_H */
