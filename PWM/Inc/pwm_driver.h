@@ -24,9 +24,13 @@ struct PWM_signal {
     TIM_IC_InitTypeDef sConfigIC;
 };
 /**
- * PWM signal setup
+ * Set PWM signal up for Input Capture
  */
-void PWM_initialize(struct PWM_signal* signal, int frequency, bool isChannel1,TIM_HandleTypeDef *htim);
+void PWM_readInit(struct PWM_signal* signal, int frequency, bool isChannel1,TIM_HandleTypeDef *htim);
+/*
+ * Set PWM signal up for being sent
+ */
+void PWM_generateInit(TIM_HandleTypeDef *htim, uint32_t channel);
 /**
  * Computes PWM parameters, to be used within HAL_TIM_IC_CaptureCallback
  */

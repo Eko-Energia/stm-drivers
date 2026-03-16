@@ -1,10 +1,10 @@
 /**
  * @file pwm_driver.c
- * @brief PWM input signal driver for PERLA project
+ * @brief PWM signal driver for PERLA project
  *
  * This module provides initialisation and update routines
  * for measuring PWM duty cycle using STM32 timer input capture
- * in PWM Input mode.
+ * in PWM Input mode and generating said signal.
  *
  * The driver supports PWM input configured either on:
  *  - TIM Channel 1 (period on CH1, duty on CH2)
@@ -22,10 +22,7 @@
 #include "pwm_driver.h"
 #include "main.h"
 #include <math.h>
-#include <stdlib.h>
 #include <stdbool.h>
-#include <string.h>
-#include <stdio.h>
 /**
 
 * @brief Set PWM pulse width as a fraction of the timer period.
@@ -37,11 +34,11 @@
 *
 * @param htim Pointer to the TIM HAL handle used for PWM generation.
 * @param Channel Timer channel to update.
-* @param width Normalized duty cycle in the range [0.0, 1.0].
+* @param width Duty cycle in the range [0.0, 100.0].
   */
 void PWM_setWidth(TIM_HandleTypeDef *htim, uint32_t Channel, float width)
 {
-	uint32_t pulseValue = (int)round((float)__HAL_TIM_GET_AUTORELOAD(htim)*width);
+	uint32_t pulseValue = (int)round((float)__HAL_TIM_GET_AUTORELOAD(htim)*(width/100));
 	__HAL_TIM_SET_COMPARE(htim,Channel,pulseValue);
 }
 
@@ -62,7 +59,7 @@ void PWM_setWidth(TIM_HandleTypeDef *htim, uint32_t Channel, float width)
  *        - false : PWM input configured on TIM Channel 2
  * @param htim Pointer to the timer handle used for input capture
  */
-void PWM_initialize(struct PWM_signal* signal,
+void PWM_readInit(struct PWM_signal* signal,
                     int frequency,
                     bool isChannel1,
                     TIM_HandleTypeDef *htim)
@@ -86,7 +83,23 @@ void PWM_initialize(struct PWM_signal* signal,
         HAL_TIM_IC_ConfigChannel(htim, &signal->sConfigIC, TIM_CHANNEL_2);
     }
 }
+/**
+ * @brief  Starts PWM generation on a specified timer channel.
+ * @param htim Pointer to the TIM HAL handle used for PWM generation.
+ * @param  channel: Specifies the TIM channel to start PWM on.
+ *                  This parameter can be one of the following values:
+ *                  @arg TIM_CHANNEL_1
+ *                  @arg TIM_CHANNEL_2
+ *                  @arg TIM_CHANNEL_3
+ *                  @arg TIM_CHANNEL_4
+ * @note   While generally calling this function on already running PWM signal
+ * 	       is safe it may cause a short glitch in the signal.
+ */
 
+void PWM_generateInit(TIM_HandleTypeDef *htim, uint32_t channel)
+{
+	HAL_TIM_PWM_Start(htim, channel);
+}
 /**
  * @brief Update PWM duty cycle measurement
  *
