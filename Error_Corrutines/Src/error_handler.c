@@ -66,7 +66,7 @@ void EH_init(EH_HandleTypeDef *hehandler, CAN_HandleTypeDef *hcanPtr, uint16_t n
 	heartbeatMsg.getData = getData_HeightbeatOK;
 	heartbeatMsg.context = hehandler;
 
-	CAN_addScheduledMessage(heartbeatMsg, hehandler->scheduler);
+	CAN_AddScheduledMsg(&heartbeatMsg, hehandler->scheduler);
 }
 
 /* ============================================================================
@@ -131,7 +131,7 @@ void EH_reportEx(EH_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_
 	}
 
 	// Switch scheduler to Error Mode
-	CAN_removeScheduledMessage(hehandler->errorFrameId, hehandler->scheduler);
+	CAN_RemoveScheduledMsg(hehandler->errorFrameId, hehandler->scheduler);
 
 	struct CAN_scheduledMsg errorMsg;
 	errorMsg.header.StdId = hehandler->errorFrameId;
@@ -145,7 +145,7 @@ void EH_reportEx(EH_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_
 	errorMsg.getData = getData_Error;
 	errorMsg.context = hehandler;
 
-	CAN_addScheduledMessage(errorMsg, hehandler->scheduler);
+	CAN_AddScheduledMsg(&errorMsg, hehandler->scheduler);
 }
 
 /**
@@ -183,7 +183,7 @@ void EH_clear(EH_HandleTypeDef *hehandler, uint16_t errorCode)
 		memset(hehandler->activeSpecificData, 0, ERROR_SPECIFIC_DATA_SIZE);
 
 		// Switch scheduler to Heartbeat OK Mode
-		CAN_removeScheduledMessage(hehandler->errorFrameId, hehandler->scheduler);
+		CAN_RemoveScheduledMsg(hehandler->errorFrameId, hehandler->scheduler);
 
 		struct CAN_scheduledMsg heartbeatMsg;
 		heartbeatMsg.header.StdId = hehandler->errorFrameId;
@@ -197,7 +197,7 @@ void EH_clear(EH_HandleTypeDef *hehandler, uint16_t errorCode)
 		heartbeatMsg.getData = getData_HeightbeatOK;
 		heartbeatMsg.context = hehandler;
 
-		CAN_addScheduledMessage(heartbeatMsg, hehandler->scheduler);
+		CAN_AddScheduledMsg(&heartbeatMsg, hehandler->scheduler);
 	}
 }
 
