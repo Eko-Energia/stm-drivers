@@ -24,9 +24,11 @@
 #endif
 
 /**
- * @brief Initialize CAN with Node ID and error handler
+ * @brief Initialize CAN peripheral
+ *
+ * @param hcanPtr   Pointer to CAN handle
  */
-void CAN_init(CAN_HandleTypeDef *hcanPtr)
+void CAN_Init(CAN_HandleTypeDef *hcanPtr)
 {
 	if (HAL_CAN_ActivateNotification(hcanPtr, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
 	{
@@ -60,40 +62,49 @@ void CAN_init(CAN_HandleTypeDef *hcanPtr)
 
 /**
  * @brief Add new message to the periodic buffer
+ *
+ * @param msg      Pointer to the message to add
+ * @param buffer   Pointer to the buffer that holds messages
+ * @retval HAL_StatusTypeDef   State of the operation
  */
-HAL_StatusTypeDef CAN_addScheduledMessage(struct CAN_scheduledMsg msg, struct CAN_scheduledMsgList *buffer)
+HAL_StatusTypeDef CAN_AddScheduledMsg(const struct CAN_scheduledMsg *msg, struct CAN_scheduledMsgList *buffer)
 {
 	// basic error checking
-	if (buffer->size >= CAN_MAX_MSG - 1)
+	if (buffer->size >= CAN_MAX_MSG)
 	{
 		Error_Handler();
 	}
-	if (msg.periodMs == 0)
+	if (msg->periodMs == 0)
 	{
 		Error_Handler();
 	}
 
-	msg.lastTick = HAL_GetTick();
+	struct CAN_scheduledMsg tempMsg = *msg;
+	tempMsg.lastTick = HAL_GetTick();
 
 	// check if id already exists in the buffer
-	for (int i = 0; i < buffer->size; i++)
+	for (uint8_t i = 0; i < buffer->size; i++)
 	{
-		if ((buffer->list[i].header.IDE == CAN_ID_STD && buffer->list[i].header.StdId == msg.header.StdId) ||
-			(buffer->list[i].header.IDE == CAN_ID_EXT && buffer->list[i].header.ExtId == msg.header.ExtId))
+		if ((buffer->list[i].header.IDE == CAN_ID_STD && buffer->list[i].header.StdId == tempMsg.header.StdId) ||
+			(buffer->list[i].header.IDE == CAN_ID_EXT && buffer->list[i].header.ExtId == tempMsg.header.ExtId))
 		{
 			return HAL_ERROR;
 		}
 	}
 
-	buffer->list[buffer->size] = msg;
+	buffer->list[buffer->size] = tempMsg;
 	buffer->size++;
 	return HAL_OK;
 }
 
-/*
+/**
  * @brief Remove message from the periodic buffer
+ *
+ * @param id       ID of the message to remove
+ * @param buffer   Pointer to the buffer that holds messages
+ * @retval HAL_StatusTypeDef   State of the operation
  */
-HAL_StatusTypeDef CAN_removeScheduledMessage(uint32_t id, struct CAN_scheduledMsgList *buffer)
+HAL_StatusTypeDef CAN_RemoveScheduledMsg(uint32_t id, struct CAN_scheduledMsgList *buffer)
 {
 	for (uint8_t i = 0; i < buffer->size; i++)
 	{
@@ -115,8 +126,11 @@ HAL_StatusTypeDef CAN_removeScheduledMessage(uint32_t id, struct CAN_scheduledMs
 
 /**
  * @brief Process all scheduled CAN messages (call in main loop)
+ *
+ * @param hcanPtr      Pointer to CAN handle
+ * @param scheduler    Pointer to the message scheduler
  */
-void CAN_handleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList *scheduler)
+void CAN_HandleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList *scheduler)
 {
 	if (hcanPtr == NULL || scheduler == NULL)
 	{
@@ -129,9 +143,9 @@ void CAN_handleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList
 		struct CAN_scheduledMsg *msg = &scheduler->list[i];
 		if (currentTick > msg->lastTick + msg->periodMs)
 		{
-			uint8_t data[msg->header.DLC];
+			uint8_t data[CAN_MAX_DLC];
 			// Initialize data to 0 to be safe
-			for(int k=0; k<msg->header.DLC; k++)
+			for (uint8_t k = 0; k < CAN_MAX_DLC; k++)
 			{
 				data[k] = 0;
 			}

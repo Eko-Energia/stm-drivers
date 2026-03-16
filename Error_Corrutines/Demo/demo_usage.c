@@ -18,9 +18,9 @@ static EH_HandleTypeDef hErrorHandler = {0};
 void app_main(void)
 {
 	/* Initialize CAN */
-	/* Configure filter, start, etc. done in CAN_init */
+	/* Configure filter, start, etc. done in CAN_Init */
 	/* We now pass the scheduler list to be handled internally by the driver */
-	CAN_init(&hcan);
+	CAN_Init(&hcan);
 
 	/* Initialize Error Handler with Scheduler */
 	/* This automatically adds the Heartbeat OK message (1s period) */
