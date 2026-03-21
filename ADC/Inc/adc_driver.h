@@ -29,21 +29,17 @@ extern "C" {
 #include "main.h"
 #include "inttypes.h"
 
+/* Private macros -------------------------------------------------------------------------------------------- */
+#define ADC_RESOLUTION 		   (4095.0f)
+
 #define ADC_USED_CHANNELS 	   (1) 											//< Macro defines amount of channels that ADC use to convert analog signals on
 #define ADC_CONVERTED_MEASURES (1)  										//< Macro defines amount of measures, that will be used to average value converted by ADC on exact channel
 #define ADC_BUFFER_SIZE 	   (ADC_USED_CHANNELS * ADC_CONVERTED_MEASURES) //< Macro stores data buffer length
 
 
-/*
- * 	@brief ADC Buffer structure, stores data buffer for independent/dual mode with and without DMA
- */
-typedef struct{
-
-	uint16_t dataBuffer[ADC_BUFFER_SIZE];									//< data buffer for no DMA usage and independent mode
-
-}ADC_BufferTypeDef;
 
 
+/* Functions' prototypes ------------------------------------------------------------------------------------ */
 /*
  * @brief  ADC initialization function, initialize type of conversion, set correct ADC's regs' values
  * @param  hadc - handle to ADC instance
@@ -59,18 +55,17 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc);
  * @param  *retval - pointer to value, which stores converted value
  * @retval status of HAL's operation
  */
-HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, uint32_t rank, uint16_t* retval);
+HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, uint8_t rank, uint16_t* retval);
 
 
 /*
- * @brief  ADC initialization function, initialize type of conversion, set correct ADC's regs' values
- * @param  hadc - handle to ADC instance
- * @param  rank - number of rank, to which channel (on which param is measured) is assigned
- * @param  maxValue - maximum value of measured parameter
- * @param  *retval - pointer to address of variable, which stores result of calculated param
- * @retval status of HAL's operation
+ * @brief  Read and scale ADC conversion result for the specified rank.
+ * @param  hadc     - handle to ADC instance
+ * @param  rank     - conversion rank to which the measured channel is assigned
+ * @param  maxValue - maximum (full-scale) value of the measured parameter corresponding to the ADC's maximum code
+ * @param  *retval  - pointer to variable that will store the calculated (scaled) parameter value
  */
-HAL_StatusTypeDef ADC_GetValue(ADC_HandleTypeDef* hadc, uint32_t rank, float maxValue, float* retval);
+HAL_StatusTypeDef ADC_GetValue(ADC_HandleTypeDef* hadc, uint8_t rank, float maxValue, float* retval);
 
 
 #ifdef __cplusplus
