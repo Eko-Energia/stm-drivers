@@ -15,7 +15,7 @@
 /**
  * PWM IC signal
  */
-struct PWM_icSignal {
+struct PWM_IC_signal {
     uint32_t frequency;
     volatile float duty;
     volatile bool readFlag;
@@ -24,9 +24,9 @@ struct PWM_icSignal {
     TIM_IC_InitTypeDef sConfigIC;
 };
 /*
- * PWM signal
+ * PWM out signal
  */
-struct PWM_signal{
+struct PWM_Out_signal{
 	TIM_HandleTypeDef* htim;
 	int frequency;
 	uint32_t Channel;
@@ -36,17 +36,17 @@ struct PWM_signal{
 /**
  * Set PWM signal up for Input Capture
  */
-void PWM_readInit(struct PWM_icSignal* signal, int frequency, bool isChannel1,TIM_HandleTypeDef *htim);
+void PWM_IC_Init(struct PWM_IC_signal* signal, TIM_HandleTypeDef *htim, int frequency, bool isChannel1);
 /*
  * Set PWM signal up for being sent
  */
-void PWM_generateInit(TIM_HandleTypeDef *htim, uint32_t Channel, float width,int frequency,struct PWM_signal *PWM);
+void PWM_Out_Init(struct PWM_Out_signal *PWM, TIM_HandleTypeDef *htim, uint32_t Channel, float duty,int frequency);
 /**
  * Computes PWM parameters, to be used within HAL_TIM_IC_CaptureCallback
  */
-void PWM_update(TIM_HandleTypeDef *htim, struct PWM_icSignal *PWM);
+void PWM_IC_update(struct PWM_IC_signal *PWM, TIM_HandleTypeDef *htim);
 /**
  * Set PWM signal duty
  */
-void PWM_setDuty(struct PWM_signal *PWM);
+void PWM_Out_setDuty(struct PWM_Out_signal *PWM, float duty);
 #endif /* PWM_SIGNAL_H */

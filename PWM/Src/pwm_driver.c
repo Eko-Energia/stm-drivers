@@ -22,10 +22,7 @@
 #include "pwm_driver.h"
 #include "main.h"
 #include <math.h>
-#include <stdlib.h>
 #include <stdbool.h>
-#include <string.h>
-#include <stdio.h>
 /**
  * @brief Set PWM pulse duty as a percentage of the timer period.
  *
@@ -35,10 +32,11 @@
  * value determines how long the PWM output stays high during one period.
  *
  * @param PWM Pointer to PWM_signal structure containing timer handle, channel, and duty cycle.
+ * @param duty PWM duty value from [0.0, 100.0] to be set.
  */
-void PWM_setDuty(struct PWM_signal *PWM)
+void PWM_Out_setDuty(struct PWM_Out_signal *PWM,float duty)
 {
-	uint32_t pulseValue = (int)round((float)__HAL_TIM_GET_AUTORELOAD(PWM->htim)*(PWM->duty/100));
+	uint32_t pulseValue = (int)round((float)__HAL_TIM_GET_AUTORELOAD(PWM->htim)*(duty/100));
 	__HAL_TIM_SET_COMPARE(PWM->htim,PWM->Channel,pulseValue);
 }
 
@@ -59,10 +57,10 @@ void PWM_setDuty(struct PWM_signal *PWM)
  *        - false : PWM input configured on TIM Channel 2
  * @param htim Pointer to the timer handle used for input capture
  */
-void PWM_readInit(struct PWM_icSignal* signal,
+void PWM_IC_Init(struct PWM_IC_signal* signal,
+		            TIM_HandleTypeDef *htim,
                     int frequency,
-                    bool isChannel1,
-                    TIM_HandleTypeDef *htim)
+                    bool isChannel1)
 {
     signal->duty = 0.0f;
     signal->readFlag = false;
@@ -98,7 +96,7 @@ void PWM_readInit(struct PWM_icSignal* signal,
  * @note   While generally calling this function on an already running PWM signal
  *         is safe, it may cause a short glitch in the signal.
  */
-void PWM_generateInit(TIM_HandleTypeDef *htim, uint32_t Channel, float duty,int frequency,struct PWM_signal *PWM)
+void PWM_Out_Init(struct PWM_Out_signal *PWM, TIM_HandleTypeDef *htim, uint32_t Channel, float duty,int frequency)
 {
 
 	HAL_TIM_PWM_Start(htim, Channel);
@@ -106,7 +104,7 @@ void PWM_generateInit(TIM_HandleTypeDef *htim, uint32_t Channel, float duty,int 
 	PWM->Channel = Channel;
 	PWM->frequency = frequency;
 	PWM->htim = htim;
-	PWM_setDuty(PWM);
+	PWM_Out_setDuty(PWM, duty);
 }
 /**
  * @brief Update PWM duty cycle measurement
@@ -129,7 +127,7 @@ void PWM_generateInit(TIM_HandleTypeDef *htim, uint32_t Channel, float duty,int 
  * @param htim Pointer to the timer handle used for input capture
  * @param PWM Pointer to initialized PWM_signal structure
  */
-void PWM_update(TIM_HandleTypeDef *htim, struct PWM_icSignal *PWM)
+void PWM_IC_update(struct PWM_IC_signal *PWM, TIM_HandleTypeDef *htim)
 {
     if (PWM->ch1)
     {
