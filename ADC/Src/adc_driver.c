@@ -34,13 +34,13 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Indepedent_Discontinuous(ADC_Hand
 		return HAL_ERROR;
 	}
 
-	for(volatile uint8_t i = 0; i <= rank; ++i){
+	for(uint8_t i = 0; i <= rank; ++i){
 
 		if(HAL_ADC_Start(hadc) != HAL_OK){
 				return HAL_ERROR;
 		}
 
-		if(HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY) != HAL_OK){
+		if(HAL_ADC_PollForConversion(hadc, ADC_POLLING_TIMEOUT) != HAL_OK){
 			return HAL_ERROR;
 		}
 
@@ -84,22 +84,22 @@ HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, uint8_t rank, uint16_
 	return HAL_OK;
 }
 
-HAL_StatusTypeDef ADC_GetValue(ADC_HandleTypeDef* hadc, uint8_t rank, float maxValue, float* retval){
+HAL_StatusTypeDef ADC_GetPinVoltage(ADC_HandleTypeDef* hadc, uint8_t rank, float* retval){
 
-	volatile float realValue = 0;
+	volatile float pinVoltage = 0;
 	uint16_t binaryType = 0;
 
 	if(ADC_ReadChannel(hadc, rank, &binaryType) != HAL_OK){
 		return HAL_ERROR;
 	}
 
-	realValue = (float)binaryType / ADC_RESOLUTION * maxValue;
+	pinVoltage = (float)binaryType / (float)ADC_RESOLUTION * STM32_VCC;
 
-	if(realValue > maxValue){
+	if(pinVoltage > STM32_VCC){
 		return HAL_ERROR;
 	}
 
-	*retval = realValue;
+	*retval = pinVoltage;
 
 	return HAL_OK;
 }
