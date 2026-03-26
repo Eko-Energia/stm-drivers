@@ -57,7 +57,7 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc);
 /*
  * @brief  ADC reading channel's value function.
  * @param  hadc - handle to ADC instance
- * @param  rank - rank to which channel is assigned
+ * @param  rank - rank to which channel is assigned (number between 0:N-1)
  * @param  *retval - pointer to value, which stores converted value
  * @retval status of HAL's operation
  */
