@@ -14,7 +14,7 @@ The current version (v2.0-alpha) will supports the following configuration:
 - **Non-Continuous**: Support for non-continous conversion to provide minimum functionalities for end users.
 - **Polling Mode**: Data retrieval via register/flag monitoring (No DMA).
 - **No Built-in Calibration**: Current conversions done by ADC are not calibrated and averaged.
-- **Independent / Dual Mode**: Automated sensing, chosen by user, mode to provide correct ADC conversions launch and registers mapping.
+- **No Dual Mode / No Auto-Sensing (Yet)**: Dual-mode operation and automated sensing/register mapping are planned features and are not available in v2.0-alpha.
 
 ---
 
