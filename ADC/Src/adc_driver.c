@@ -104,7 +104,7 @@ HAL_StatusTypeDef ADC_GetPinVoltage(ADC_HandleTypeDef* hadc, uint8_t rank, float
 	assert(retval != NULL);
 
 	// declaration of variables which will store end value of pin's voltage and sampled value from ADC's channel
-	volatile float pinVoltage = 0;
+	float pinVoltage = 0;
 	uint16_t binaryType = 0;
 
 	// reading sampled value from channel
