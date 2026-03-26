@@ -20,6 +20,12 @@
 
 static HAL_StatusTypeDef ADC_Init_NoDMA_Indepedent_Discontinuous(ADC_HandleTypeDef* hadc){
 
+	// checking if user gave null pointers
+	if(NULL == hadc){
+		return HAL_ERROR;
+	}
+
+
 	// ADC currently started
 
 	return HAL_OK;
@@ -28,8 +34,9 @@ static HAL_StatusTypeDef ADC_Init_NoDMA_Indepedent_Discontinuous(ADC_HandleTypeD
 static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Indepedent_Discontinuous(ADC_HandleTypeDef* hadc, uint8_t rank, uint16_t* retval){
 
 	// checking if user gave null pointers
-	assert(hadc != NULL);
-	assert(retval != NULL);
+	if(NULL == hadc || NULL == retval){
+		return HAL_ERROR;
+	}
 
 	// declaration of variable, which is in charge of storing sampled value from ADC pin
 	uint16_t binaryType = 0;
@@ -100,8 +107,9 @@ HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, uint8_t rank, uint16_
 HAL_StatusTypeDef ADC_GetPinVoltage(ADC_HandleTypeDef* hadc, uint8_t rank, float* retval){
 
 	// checking if user gave null pointers
-	assert(hadc != NULL);
-	assert(retval != NULL);
+	if(NULL == hadc || NULL == retval){
+		return HAL_ERROR;
+	}
 
 	// declaration of variables which will store end value of pin's voltage and sampled value from ADC's channel
 	float pinVoltage = 0;

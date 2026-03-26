@@ -29,7 +29,6 @@ extern "C" {
 #include "main.h"
 #include <stdint.h>
 #include "stm32_family.h"
-#include <assert.h>
 
 /* Private constant macros -------------------------------------------------------------------------------------------- */
 #define ADC_RESOLUTION 		   (4095)
