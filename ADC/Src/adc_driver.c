@@ -42,7 +42,7 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent_Discontinuous(ADC_Han
 	uint16_t binaryType = 0;
 
 	// check if user passed incorrect rank
-	if(rank > 16){
+	if(rank >= 16){
 		return HAL_ERROR;
 	}
 
