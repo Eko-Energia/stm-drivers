@@ -32,7 +32,7 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Indepedent_Discontinuous(ADC_Hand
 	assert(retval != NULL);
 
 	// declaration of variable, which is in charge of storing sampled value from ADC pin
-	volatile uint16_t binaryType = 0;
+	uint16_t binaryType = 0;
 
 	// check if user passed incorrect rank
 	if(rank > 16){
