@@ -18,7 +18,7 @@
 
 #include "adc_driver.h"
 
-static HAL_StatusTypeDef ADC_Init_NoDMA_Indepedent_Discontinuous(ADC_HandleTypeDef* hadc){
+static HAL_StatusTypeDef ADC_Init_NoDMA_Independent_Discontinuous(ADC_HandleTypeDef* hadc){
 
 	// checking if user gave null pointers
 	if(NULL == hadc){
@@ -31,7 +31,7 @@ static HAL_StatusTypeDef ADC_Init_NoDMA_Indepedent_Discontinuous(ADC_HandleTypeD
 	return HAL_OK;
 }
 
-static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Indepedent_Discontinuous(ADC_HandleTypeDef* hadc, uint8_t rank, uint16_t* retval){
+static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent_Discontinuous(ADC_HandleTypeDef* hadc, uint8_t rank, uint16_t* retval){
 
 	// checking if user gave null pointers
 	if(NULL == hadc || NULL == retval){
@@ -89,7 +89,7 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc){
 	*/
 
 	// start ADC's conversion in independent/no DMA/discontinuous mode
-	if(ADC_Init_NoDMA_Indepedent_Discontinuous(hadc) != HAL_OK){
+	if(ADC_Init_NoDMA_Independent_Discontinuous(hadc) != HAL_OK){
 		return HAL_ERROR;
 	}
 
@@ -102,7 +102,7 @@ HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, uint8_t rank, uint16_
 
 
 	// Because driver supports independent conversion mode without DMA support for ADC in independent mode only function beloww is called
-	if(ADC_ReadChannel_NoDMA_Indepedent_Discontinuous(hadc, rank, retval) != HAL_OK){
+	if(ADC_ReadChannel_NoDMA_Independent_Discontinuous(hadc, rank, retval) != HAL_OK){
 		return HAL_ERROR;
 	}
 
