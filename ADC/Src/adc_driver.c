@@ -73,6 +73,11 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Indepedent_Discontinuous(ADC_Hand
 
 HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc){
 
+	// checking if user passed null pointer to ADC handle
+	if(NULL == hadc){
+		return HAL_ERROR;
+	}
+
 	// Initializing ADC
 	if(HAL_ADC_Init(hadc) != HAL_OK){
 		return HAL_ERROR;
