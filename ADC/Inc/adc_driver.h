@@ -27,16 +27,18 @@ extern "C" {
 #endif
 
 #include "main.h"
-#include "inttypes.h"
+#include <stdint.h>
+#include "stm32_family.h"
 
-/* Private macros -------------------------------------------------------------------------------------------- */
-#define ADC_RESOLUTION 		   (4095.0f)
-
+/* Private constant macros -------------------------------------------------------------------------------------------- */
+#define ADC_RESOLUTION 		   (4095)
 #define ADC_USED_CHANNELS 	   (1) 											//< Macro defines amount of channels that ADC use to convert analog signals on
 #define ADC_CONVERTED_MEASURES (1)  										//< Macro defines amount of measures, that will be used to average value converted by ADC on exact channel
 #define ADC_BUFFER_SIZE 	   (ADC_USED_CHANNELS * ADC_CONVERTED_MEASURES) //< Macro stores data buffer length
 
+#define ADC_POLLING_TIMEOUT    (100)										 //< Macro stores max ADC polling timeout, to prevent endless blocking by polling
 
+#define STM32_VCC              (3.3f)										 //< STM32 supply voltage for reading ADC's pins' voltages
 
 
 /* Functions' prototypes ------------------------------------------------------------------------------------ */
@@ -59,13 +61,12 @@ HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, uint8_t rank, uint16_
 
 
 /*
- * @brief  Read and scale ADC conversion result for the specified rank.
+ * @brief  Read and scale ADC conversion result for the specified rank into assigned to rank STM32 pin;s voltage.
  * @param  hadc     - handle to ADC instance
  * @param  rank     - conversion rank to which the measured channel is assigned
- * @param  maxValue - maximum (full-scale) value of the measured parameter corresponding to the ADC's maximum code
- * @param  *retval  - pointer to variable that will store the calculated (scaled) parameter value
+ * @param  *retval  - pointer to variable that will store pin voltage for future operations
  */
-HAL_StatusTypeDef ADC_GetValue(ADC_HandleTypeDef* hadc, uint8_t rank, float maxValue, float* retval);
+HAL_StatusTypeDef ADC_GetPinVoltage(ADC_HandleTypeDef* hadc, uint8_t rank, float* retval);
 
 
 #ifdef __cplusplus
