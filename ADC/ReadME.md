@@ -1,7 +1,7 @@
 # ⚠️ STM32 Peripheral ADC Driver (v2.0 - Work in Progress)
 
 **Status:** New Development Version (Under Construction).  
-This driver is currently under active development. The current implementation focuses on providing a stable foundation for high-precision measurements in specific operating modes. In addition to the API functions, the driver also provides unit tests, the execution of which clearly verifies the correct operation of the API functions.
+Current implementation focuses on establishing a robust framework for high-precision ADC sampling. Following a TDD approach, the driver provides integrated unit tests that validate API behavior and hardware state, ensuring consistent performance across supported operating modes.
 
 ---
 
