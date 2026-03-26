@@ -66,7 +66,7 @@ HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, uint8_t rank, uint16_
 
 
 /*
- * @brief  Read and scale ADC conversion result for the specified rank into assigned to rank STM32 pin;s voltage.
+ * @brief  Read and scale ADC conversion result for the specified rank into the voltage on the assigned STM32 pin.
  * @param  hadc     - handle to ADC instance
  * @param  rank     - conversion rank to which the measured channel is assigned
  * @param  *retval  - pointer to variable that will store pin voltage for future operations
