@@ -11,7 +11,7 @@ The current version (v2.0-alpha) will support the following configuration:
 
 - **No Target Auto-Sensing**: Current firmware provides ADC API functions for STM32F3 familiy.
 - **Independent Mode**: Full support for standalone ADC operations.
-- **Non-Continuous**: Support for non-continous conversion to provide minimum functionalities for end users.
+- **Non-Continuous**: Support for non-continuous conversion to provide minimum functionalities for end users.
 - **Polling Mode**: Data retrieval via register/flag monitoring (No DMA).
 - **No Built-in Calibration**: Current conversions done by ADC are not calibrated and averaged.
 - **No Dual Mode / No Auto-Sensing (Yet)**: Dual-mode operation and automated sensing/register mapping are planned features and are not available in v2.0-alpha.
