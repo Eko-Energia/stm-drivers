@@ -27,26 +27,36 @@ static HAL_StatusTypeDef ADC_Init_NoDMA_Indepedent_Discontinuous(ADC_HandleTypeD
 
 static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Indepedent_Discontinuous(ADC_HandleTypeDef* hadc, uint8_t rank, uint16_t* retval){
 
+	// checking if user gave null pointers
+	assert(hadc != NULL);
+	assert(retval != NULL);
+
+	// declaration of variable, which is in charge of storing sampled value from ADC pin
 	volatile uint16_t binaryType = 0;
 
-
+	// check if user passed incorrect rank
 	if(rank > 16){
 		return HAL_ERROR;
 	}
 
+	// iterating to correct rank number
 	for(uint8_t i = 0; i <= rank; ++i){
 
+		// starting ADC every polling launch
 		if(HAL_ADC_Start(hadc) != HAL_OK){
 				return HAL_ERROR;
 		}
 
+		// launching polling to read sampled value
 		if(HAL_ADC_PollForConversion(hadc, ADC_POLLING_TIMEOUT) != HAL_OK){
 			return HAL_ERROR;
 		}
 
+		// reading sampled value from DR (data register) of ADSC
 		binaryType = (uint16_t)HAL_ADC_GetValue(hadc);
 	}
 
+	// assigning extracted value to retval
 	*retval = binaryType;
 
 
@@ -77,6 +87,9 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc){
 
 HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, uint8_t rank, uint16_t* retval){
 
+
+
+	// Because driver supports independent conversion mode without DMA support for ADC in independent mode only function beloww is called
 	if(ADC_ReadChannel_NoDMA_Indepedent_Discontinuous(hadc, rank, retval) != HAL_OK){
 		return HAL_ERROR;
 	}
@@ -86,19 +99,23 @@ HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, uint8_t rank, uint16_
 
 HAL_StatusTypeDef ADC_GetPinVoltage(ADC_HandleTypeDef* hadc, uint8_t rank, float* retval){
 
+	// checking if user gave null pointers
+	assert(hadc != NULL);
+	assert(retval != NULL);
+
+	// declaration of variables which will store end value of pin's voltage and sampled value from ADC's channel
 	volatile float pinVoltage = 0;
 	uint16_t binaryType = 0;
 
+	// reading sampled value from channel
 	if(ADC_ReadChannel(hadc, rank, &binaryType) != HAL_OK){
 		return HAL_ERROR;
 	}
 
+	// calculating voltage on pin, assigned to channel
 	pinVoltage = (float)binaryType / (float)ADC_RESOLUTION * STM32_VCC;
 
-	if(pinVoltage > STM32_VCC){
-		return HAL_ERROR;
-	}
-
+	// assigning voltage value to retval
 	*retval = pinVoltage;
 
 	return HAL_OK;
