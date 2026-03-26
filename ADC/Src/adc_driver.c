@@ -42,7 +42,7 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent_Discontinuous(ADC_Han
 	uint16_t binaryType = 0;
 
 	// check if user passed incorrect rank
-	if(rank >= 16){
+	if(rank >= ADC_USED_CHANNELS){
 		return HAL_ERROR;
 	}
 
@@ -78,15 +78,12 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc){
 		return HAL_ERROR;
 	}
 
+
 	// Initializing ADC
 	if(HAL_ADC_Init(hadc) != HAL_OK){
 		return HAL_ERROR;
 	}
 
-	/* TODO: Implement calibration and configuration for
-		 * independent / no-DMA / discontinuous mode.
-		 * Until then, report an error instead of silently succeeding.
-	*/
 
 	// start ADC's conversion in independent/no DMA/discontinuous mode
 	if(ADC_Init_NoDMA_Independent_Discontinuous(hadc) != HAL_OK){
