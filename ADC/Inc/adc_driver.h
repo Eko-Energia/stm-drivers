@@ -31,15 +31,14 @@ extern "C" {
 #include "stm32_family.h"
 
 /* Private constant macros -------------------------------------------------------------------------------------------- */
-#define ADC_RESOLUTION 		   (4095)
-#define ADC_CONVERTED_MEASURES (1)  										//< Macro defines amount of measures, that will be used to average value converted by ADC on exact channel
-#define ADC_BUFFER_SIZE 	   (ADC_USED_CHANNELS * ADC_CONVERTED_MEASURES) //< Macro stores data buffer length
 
 #ifndef ADC_USED_CHANNELS
 	#define ADC_USED_CHANNELS 	   (1) 										//< Macro defines amount of channels that ADC use to convert analog signals on
 #endif
 
-
+#define ADC_RESOLUTION 		   (4095)
+#define ADC_CONVERTED_MEASURES (1)  										//< Macro defines amount of measures, that will be used to average value converted by ADC on exact channel
+#define ADC_BUFFER_SIZE 	   (ADC_USED_CHANNELS * ADC_CONVERTED_MEASURES) //< Macro stores data buffer length
 #define ADC_POLLING_TIMEOUT    (100)										 //< Macro stores max ADC polling timeout, to prevent endless blocking by polling
 
 #define STM32_VCC              (3.3f)										 //< STM32 supply voltage for reading ADC's pins' voltages
