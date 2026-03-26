@@ -46,8 +46,8 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent_Discontinuous(ADC_Han
 		return HAL_ERROR;
 	}
 
-	// iterating to correct rank number
-	for(uint8_t i = 0; i <= rank; ++i){
+	// iterating to correct rank number and providing for polling through all channels, to reset reading sequence
+	for(uint8_t i = 0; i < ADC_USED_CHANNELS; ++i){
 
 		// starting ADC every polling launch
 		if(HAL_ADC_Start(hadc) != HAL_OK){
@@ -59,8 +59,17 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent_Discontinuous(ADC_Han
 			return HAL_ERROR;
 		}
 
-		// reading sampled value from DR (data register) of ADSC
-		binaryType = (uint16_t)HAL_ADC_GetValue(hadc);
+		{	// using scopes for providing optimized memory usage, and reading sampled value
+			uint16_t tempSampledValue = (uint16_t)HAL_ADC_GetValue(hadc);
+
+			// checking if current iteration is associated with reading selected channel
+			if(i == rank){
+
+				// assigning sampled value if current iteration is associated with reading selected channel's value
+				binaryType = tempSampledValue;
+			}
+		}
+
 	}
 
 	// assigning extracted value to retval
