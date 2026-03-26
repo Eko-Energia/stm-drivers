@@ -7,7 +7,7 @@ Current implementation focuses on establishing a robust framework for high-preci
 
 ## 🚀 Key Features (Current Support)
 
-The current version (v2.0-alpha) will supports the following configuration:
+The current version (v2.0-alpha) will support the following configuration:
 
 - **No Target Auto-Sensing**: Current firmware provides ADC API functions for STM32F3 familiy.
 - **Independent Mode**: Full support for standalone ADC operations.
