@@ -39,7 +39,17 @@ void PWM_Out_setDuty(struct PWM_Out_signal *PWM,float duty)
 	uint32_t pulseValue = (int)round((float)__HAL_TIM_GET_AUTORELOAD(PWM->htim)*(duty/100));
 	__HAL_TIM_SET_COMPARE(PWM->htim,PWM->Channel,pulseValue);
 }
-
+/*
+ *
+ */
+void PWM_IC_Monitor(struct PWM_IC_signal* signal){
+	if(signal->clock + 100 < HAL_GetTick()){
+		if(!signal->readFlag){
+			signal->duty = 0;
+		}
+		signal->readFlag = flase;
+	}
+}
 
 /**
  * @brief Initialize PWM input signal structure and timer channel
@@ -67,6 +77,7 @@ void PWM_IC_Init(struct PWM_IC_signal* signal,
     signal->frequency = frequency;
     signal->icVal = 0;
     signal->ch1 = isChannel1;
+    signal->clock = HAL_GetTick()
     /* Configure input capture parameters */
     signal->sConfigIC.ICPolarity  = TIM_INPUTCHANNELPOLARITY_RISING;
     signal->sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
@@ -75,14 +86,10 @@ void PWM_IC_Init(struct PWM_IC_signal* signal,
     if (isChannel1)
     {
         HAL_TIM_IC_ConfigChannel(htim, &signal->sConfigIC, TIM_CHANNEL_1);
-        HAL_TIM_IC_Start_IT(htim, TIM_CHANNEL_1);
-        HAL_TIM_IC_Start(htim, TIM_CHANNEL_2);
     }
     else
     {
         HAL_TIM_IC_ConfigChannel(htim, &signal->sConfigIC, TIM_CHANNEL_2);
-        HAL_TIM_IC_Start_IT(htim, TIM_CHANNEL_2);
-        HAL_TIM_IC_Start(htim, TIM_CHANNEL_1);
     }
 }
 /**
@@ -133,6 +140,7 @@ void PWM_Out_Init(struct PWM_Out_signal *PWM, TIM_HandleTypeDef *htim, uint32_t 
  */
 void PWM_IC_update(struct PWM_IC_signal *PWM, TIM_HandleTypeDef *htim)
 {
+	PWM->readFlag = true;
     if (PWM->ch1)
     {
         PWM->icVal = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);

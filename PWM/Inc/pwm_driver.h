@@ -22,6 +22,7 @@ struct PWM_IC_signal {
     volatile uint32_t icVal;
     bool ch1;
     TIM_IC_InitTypeDef sConfigIC;
+	uint32_t clock;
 };
 /*
  * PWM out signal
@@ -33,6 +34,10 @@ struct PWM_Out_signal{
 	float duty;
 
 };
+/*
+ *
+ */
+void PWM_IC_Monitor(struct PWM_IC_signal* signal);
 /**
  * Set PWM signal up for Input Capture
  */
