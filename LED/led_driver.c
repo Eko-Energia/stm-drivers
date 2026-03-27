@@ -1,6 +1,6 @@
 #include "led_driver.h"
 
-void LED_Handle(LED *led)
+void LED_Handle(struct LED *led)
 {
     switch(led->state)
     {
@@ -22,7 +22,7 @@ void LED_Handle(LED *led)
     }
 }
 
-void LED_ChangeState(LED *led)
+void LED_ChangeState(struct LED *led)
 {
     switch(led->state)
     {
