@@ -1,6 +1,6 @@
 # LED Driver
 
-This driver provides simple LED control for STM32 HAL-based boards, supporting off, on, and blinking modes.
+This driver provides simple LED control for STM32 HAL-based boards, supporting off, on, and blinking modes. This module is to be implemented on every board in PERLA solar car to ensure standard behavior.
 
 ## Basic Usage
 
