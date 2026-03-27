@@ -27,7 +27,7 @@ typedef enum {
  * @struct LED
  * @brief LED driver context structure.
  */
-typedef struct {
+struct {
     LED_STATE_e state;        /**< Current LED state */
     GPIO_TypeDef* GPIO_Port;  /**< STM32 GPIO port */
     uint16_t GPIO_Pin;        /**< STM32 GPIO pin */

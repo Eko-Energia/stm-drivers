@@ -22,8 +22,9 @@ void LED_Handle(struct LED *led)
     }
 }
 
-void LED_ChangeState(struct LED *led)
+void LED_ChangeState(struct LED *led, LED_STATE_e state)
 {
+    led->state = state;
     switch(led->state)
     {
         case LED_OFF:
