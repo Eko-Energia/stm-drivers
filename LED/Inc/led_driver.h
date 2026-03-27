@@ -19,20 +19,20 @@
 typedef enum {
     LED_OFF = 0,        /**< LED is turned off */
     LED_FAST_BLINK = 100, /**< LED toggles at fast blink interval (ms) */
-    LED_BLINK = 200,    /**< LED toggles at regular blink interval (ms) */
-    LED_ON = 1000       /**< LED is permanently on (treated as stable state) */
+    LED_BLINK = 1000,    /**< LED toggles at regular blink interval (ms) */
+    LED_ON = 1001       /**< LED is permanently on (treated as stable state) */
 } LED_STATE_e;
 
 /**
  * @struct LED
  * @brief LED driver context structure.
  */
-struct {
+struct LED{
     LED_STATE_e state;        /**< Current LED state */
     GPIO_TypeDef* GPIO_Port;  /**< STM32 GPIO port */
-    uint16_t GPIO_Pin;        /**< STM32 GPIO pin */
+    uint16_t GPIO_Pin;       /**< STM32 GPIO pin */
     uint32_t lastTick;        /**< HAL tick snapshot for blink timing */
-} LED;
+};
 
 /**
  * @brief Process LED behavior based on state and timing.
@@ -50,6 +50,6 @@ void LED_Handle(struct LED *led);
  * This function updates the actual GPIO output according to the
  * selected state and resets the timing reference for blinking.
  */
-void LED_ChangeState(struct LED *led);
+void LED_ChangeState(struct LED *led, LED_STATE_e state);
 
 #endif /* LED_DRIVER_H */
