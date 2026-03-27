@@ -43,11 +43,19 @@ void PWM_Out_setDuty(struct PWM_Out_signal *PWM,float duty)
  *
  */
 void PWM_IC_Monitor(struct PWM_IC_signal* signal){
-	if(signal->clock + 100 < HAL_GetTick()){
+	float checkPeriod = (100/signal->frequency)*(8.05f);
+	uint32_t msDelay;
+	if(checkPeriod < 1){
+		msDelay = 1;
+	}
+	else{
+		msDelay = (int)ceil(checkPeriod);
+	}
+	if((HAL_GetTick() - signal->clock) > msDelay){
 		if(!signal->readFlag){
 			signal->duty = 0;
 		}
-		signal->readFlag = flase;
+		signal->readFlag = false;
 	}
 }
 
@@ -77,7 +85,7 @@ void PWM_IC_Init(struct PWM_IC_signal* signal,
     signal->frequency = frequency;
     signal->icVal = 0;
     signal->ch1 = isChannel1;
-    signal->clock = HAL_GetTick()
+    signal->clock = HAL_GetTick();
     /* Configure input capture parameters */
     signal->sConfigIC.ICPolarity  = TIM_INPUTCHANNELPOLARITY_RISING;
     signal->sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
