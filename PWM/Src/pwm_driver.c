@@ -39,24 +39,43 @@ void PWM_Out_setDuty(struct PWM_Out_signal *PWM,float duty)
 	uint32_t pulseValue = (int)round((float)__HAL_TIM_GET_AUTORELOAD(PWM->htim)*(duty/100));
 	__HAL_TIM_SET_COMPARE(PWM->htim,PWM->Channel,pulseValue);
 }
-/*
+/**
+ * @brief Monitors PWM input signal and updates duty cycle in case of signal timeout.
  *
+ * This function checks whether a PWM input signal has timed out based on the
+ * expected signal frequency and a configurable monitoring period count.
+ * If no signal edge is detected within the calculated timeout period,
+ * the function reads the current GPIO pin state and sets the duty cycle
+ * to either 0% or 100%, assuming a constant LOW or HIGH signal.
+ *
+ * @param signal Pointer to PWM_IC_signal structure containing signal parameters
+ *               such as frequency, last capture clock, and duty cycle.
+ * @param GPIOx  Pointer to GPIO port where the PWM signal pin is connected.
+ * @param GPIO_Pin GPIO pin number used for PWM input monitoring.
+ *
+ * @note The timeout is calculated as:
+ *       TIMEOUT_MS = (1000 / frequency) * PWM_monitorPeriodCount
+ *       Minimum timeout is clamped to 1 ms.
+ *
+ * @warning If frequency is set incorrectly or to 0, timeout calculation
+ *          may produce invalid results.
+ *
+ * @retval None
  */
-void PWM_IC_Monitor(struct PWM_IC_signal* signal){
-	float checkPeriod = (100/signal->frequency)*(8.05f);
-	uint32_t msDelay;
-	if(checkPeriod < 1){
-		msDelay = 1;
-	}
-	else{
-		msDelay = (int)ceil(checkPeriod);
-	}
-	if((HAL_GetTick() - signal->clock) > msDelay){
-		if(!signal->readFlag){
-			signal->duty = 0;
-		}
-		signal->readFlag = false;
-	}
+void PWM_IC_Monitor(struct PWM_IC_signal* signal,GPIO_TypeDef* GPIOx,uint16_t GPIO_Pin) {
+    uint32_t now = HAL_GetTick();
+    uint32_t TIMEOUT_MS = (1000.0f/signal->frequency)*(float)PWM_monitorPeriodCount;
+    if (TIMEOUT_MS<1){
+    	TIMEOUT_MS = 1;
+    }
+    if ((now - signal->clock) > TIMEOUT_MS) {
+        if (HAL_GPIO_ReadPin(GPIOx, GPIO_Pin) == GPIO_PIN_SET) {
+            signal->duty = 100.0f;
+        } else {
+            signal->duty = 0.0f;
+        }
+        signal->clock = now;
+    }
 }
 
 /**
@@ -81,7 +100,6 @@ void PWM_IC_Init(struct PWM_IC_signal* signal,
                     bool isChannel1)
 {
     signal->duty = 0.0f;
-    signal->readFlag = false;
     signal->frequency = frequency;
     signal->icVal = 0;
     signal->ch1 = isChannel1;
@@ -89,7 +107,6 @@ void PWM_IC_Init(struct PWM_IC_signal* signal,
     /* Configure input capture parameters */
     signal->sConfigIC.ICPolarity  = TIM_INPUTCHANNELPOLARITY_RISING;
     signal->sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
-    signal->sConfigIC.ICPrescaler = TIM_ICPSC_DIV8;
     signal->sConfigIC.ICFilter    = 0;
     if (isChannel1)
     {
@@ -148,7 +165,7 @@ void PWM_Out_Init(struct PWM_Out_signal *PWM, TIM_HandleTypeDef *htim, uint32_t 
  */
 void PWM_IC_update(struct PWM_IC_signal *PWM, TIM_HandleTypeDef *htim)
 {
-	PWM->readFlag = true;
+	PWM->clock = HAL_GetTick();
     if (PWM->ch1)
     {
         PWM->icVal = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
