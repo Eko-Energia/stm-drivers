@@ -21,7 +21,6 @@
 struct PWM_IC_signal {
     uint32_t frequency;
     volatile float duty;
-    volatile bool readFlag;
     volatile uint32_t icVal;
     bool ch1;
     TIM_IC_InitTypeDef sConfigIC;
