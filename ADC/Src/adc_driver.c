@@ -59,6 +59,10 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent(ADC_HandleTypeDef* ha
             	// assigning to end value of sampled ADC value
             	endValue = tempValue;
             }
+    	}else{
+
+    		// if polling crashes then return error status
+    		return HAL_ERROR;
     	}
 
     }
