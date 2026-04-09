@@ -81,7 +81,7 @@ inline uint8_t ADC_Discontinuous(ADC_HandleTypeDef* hadc){
 	#if defined(STM32F1_FAMILY)
 
 	    // returning CR2 continuous conversion data value to local variable
-	    return (uint8_t)((hadc1.Instance->CR1 >> ADC_CR1_DISCEN_Pos) & 0x1);
+	    return (uint8_t)((hadc->Instance->CR1 >> ADC_CR1_DISCEN_Pos) & 0x1);
 
     #elif defined(STM32F3_FAMILY)
 
