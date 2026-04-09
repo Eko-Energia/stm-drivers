@@ -280,7 +280,7 @@ HAL_StatusTypeDef ADC_Get_PinVoltage(ADC_HandleTypeDef* hadc, ADC_ChannelsConfig
 	}
 
 	// Calculating voltage on pin
-	tempValue = (float)(binaryValue/ADC_Resolution(hadc) * STM32_VCC);
+	tempValue = (float)((float)binaryValue/(float)ADC_Resolution(hadc) * STM32_VCC);
 
 	// Security check
 	if(tempValue >= STM32_GND || tempValue <= STM32_VCC){
