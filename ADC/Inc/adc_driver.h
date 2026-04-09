@@ -48,7 +48,7 @@ typedef struct{
 
 
 #define ADC1_BUFFER_SIZE 	   (ADC1_USED_CHANNELS * ADC_CONVERTED_MEASURES) //< Macro stores data buffer length
-#define ADC2_BUFFER_SIZE 	   (ADC1_USED_CHANNELS * ADC_CONVERTED_MEASURES) //< Macro stores data buffer length
+#define ADC2_BUFFER_SIZE 	   (ADC2_USED_CHANNELS * ADC_CONVERTED_MEASURES) //< Macro stores data buffer length
 
 
 /* Functions' prototypes ------------------------------------------------------------------------------------ */
