@@ -27,7 +27,7 @@ extern ADC_HandleTypeDef hadc1;
 
 /* Functions' bodies ------------------------------------------------------------------------------------ */
 
-inline uint8_t ADC_GetMode(ADC_HandleTypeDef* hadc){
+uint8_t ADC_GetMode(ADC_HandleTypeDef* hadc){
 
 	// checking if hadc is a NULL to prevent launching incorrect operations
 	if(hadc == NULL){
@@ -51,7 +51,7 @@ inline uint8_t ADC_GetMode(ADC_HandleTypeDef* hadc){
 }
 
 
-inline uint8_t ADC_Continuous(ADC_HandleTypeDef* hadc){
+uint8_t ADC_Continuous(ADC_HandleTypeDef* hadc){
 
 	// checking if hadc is a NULL to prevent launching incorrect operations
 	if(hadc == NULL){
@@ -70,7 +70,7 @@ inline uint8_t ADC_Continuous(ADC_HandleTypeDef* hadc){
 	return 0xFF;
 }
 
-inline uint8_t ADC_Discontinuous(ADC_HandleTypeDef* hadc){
+uint8_t ADC_Discontinuous(ADC_HandleTypeDef* hadc){
 
 	// checking if hadc is a NULL to prevent launching incorrect operations
 	if(hadc == NULL){
@@ -95,7 +95,7 @@ inline uint8_t ADC_Discontinuous(ADC_HandleTypeDef* hadc){
 }
 
 
-inline uint8_t ADC_DMA_ENABLED(ADC_HandleTypeDef* hadc){
+uint8_t ADC_DMA_ENABLED(ADC_HandleTypeDef* hadc){
 
 	// Checking if correct pointer was passed
 	if(hadc == NULL){
@@ -110,7 +110,7 @@ inline uint8_t ADC_DMA_ENABLED(ADC_HandleTypeDef* hadc){
     return 0xFF;
 }
 
-inline uint16_t ADC_Resolution(ADC_HandleTypeDef* hadc){
+uint16_t ADC_Resolution(ADC_HandleTypeDef* hadc){
 
    // checking if correct pointer was given
    if(hadc == NULL){
