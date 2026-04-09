@@ -19,12 +19,6 @@
 
 #include "adc_utils.h"
 
-/* Exported variables ------------------------------------------------------------------------------------ */
-extern ADC_HandleTypeDef hadc1;
-
-// Definition of array, which stores continuous ranks offsets in SQRx regs
-
-
 /* Functions' bodies ------------------------------------------------------------------------------------ */
 
 uint8_t ADC_GetMode(ADC_HandleTypeDef* hadc){
