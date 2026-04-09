@@ -1,16 +1,17 @@
 /**
  * @file demo_usage.c
- * @brief Simple demo of Error Handler with Heartbeat and Error States
+ * @brief Demonstration of the PERLA CAN Error Handler with concurrent fault multiplexing
+ * @author AGH EKO-ENERGIA
  */
 
 #include "main.h"
 #include "error_handler.h"
 #include "can_driver.h"
 
-// Pedals node - arithmetics using Kvasser ID (64 is start of block, 5 bits of messageID)
+/* Node definition: Pedals node using Kvasser ID logic */
 #define MY_NODE_ID (64 >> 5)
 
-/* Global references (mocking what main.c would have) */
+/* Global references (simulating main.c configuration) */
 extern CAN_HandleTypeDef hcan;
 struct CAN_scheduledMsgList schedulerList = {0};
 static EH_HandleTypeDef hErrorHandler = {0};
@@ -22,66 +23,84 @@ void app_main(void)
 	/* We now pass the scheduler list to be handled internally by the driver */
 	CAN_Init(&hcan);
 
-	/* Initialize Error Handler with Scheduler */
-	/* This automatically adds the Heartbeat OK message (1s period) */
+	/* 
+	 * Initialize the Error Handler and attach it to the CAN scheduler 
+	 * This automatically queues the Heartbeat OK message (1s period).
+	 */
 	EH_init(&hErrorHandler, &hcan, MY_NODE_ID, &schedulerList);
 
-	uint32_t start = HAL_GetTick();
+	uint32_t start_ms = HAL_GetTick();
+	uint8_t errorsAdded = 0;
 
-	/* State machine demo variables */
-	uint8_t demoState = 0;
-	uint32_t lastStateChange = 0;
-
+	/* Main application loop */
 	while (1)
 	{
-		/* Process queued messages (Heartbeats or Error Frames) */
-		/* Now handled by the driver's process function */
+		/* 
+		 * Process queued CAN messages (Heartbeats or Multiplexed Error Frames)
+		 * Must be called continuously in the loop to handle period intervals.
+		 */
 		CAN_HandleScheduled(&hcan, &schedulerList);
 
-		uint32_t now = HAL_GetTick();
-		if (now - lastStateChange > 5000)
+		uint32_t elapsed_ms = HAL_GetTick() - start_ms;
+
+		/* 
+		 * PHASE 1 (0s - 5s): Testing Heartbeat
+		 * Heartbeat OK message (0xFFFF) is sent dynamically every 1000ms.
+		 */
+
+		/* 
+		 * PHASE 2 (5s - 15s): Fault Injection and Multiplexing
+		 * Sequentially adding multiple errors to test priority eviction and time-scaling.
+		 */
+		if (elapsed_ms >= 5000 && elapsed_ms < 15000)
 		{
-			lastStateChange = now;
-			demoState++;
-
-			switch (demoState)
-			{
-			case 1:
-				/* 5s: Simulate Minor Error A */
-				/* Should replace Heartbeat OK with Error Message (300ms period) with Code 0x0100 */
+			if (elapsed_ms >= 5000 && errorsAdded == 0) {
+				/* Inject Warning #1 (300ms cycle) */
 				EH_report(&hErrorHandler, 0x0100, ERROR_SEVERITY_WARNING);
-				break;
+				errorsAdded++;
+			}
+			else if (elapsed_ms >= 7000 && errorsAdded == 1) {
+				/* Inject Warning #2 (270ms cycle) */
+				EH_report(&hErrorHandler, 0x0200, ERROR_SEVERITY_WARNING);
+				errorsAdded++;
+			}
+			else if (elapsed_ms >= 9000 && errorsAdded == 2) {
+				/* Inject Error #1 (240ms cycle) */
+				EH_report(&hErrorHandler, 0x0300, ERROR_SEVERITY_ERROR);
+				errorsAdded++;
+			}
+			else if (elapsed_ms >= 11000 && errorsAdded == 3) {
+				/* Inject Warning #3 & Clear Older Faults (270ms cycle recovery) */
+				EH_report(&hErrorHandler, 0x0400, ERROR_SEVERITY_WARNING);
 
-			case 2:
-				/* 10s: Simulate Minor Error B (Overwrites A) */
-				/* Should update Error Message to Code 0x0200 */
-				EH_report(&hErrorHandler, 0x0200, ERROR_SEVERITY_ERROR);
-				break;
-
-			case 3:
-				/* 15s: Clear Error A (Should fail/ignore as B is active) */
-				/* Should still show Error 0x0200 */
+				/* Dynamically clear the first 3 registered errors */
 				EH_clear(&hErrorHandler, 0x0100);
-				break;
-
-			case 4:
-				/* 20s: Clear Error B (Correct) */
-				/* Should return to Heartbeat OK (1s period, Code 0xFFFF). */
 				EH_clear(&hErrorHandler, 0x0200);
-				break;
-
-			case 5:
-				/* 25s: Simulate Critical Error (Stop) */
-				/* Should send Error Message and enter infinite loop processing CAN */
-				EH_stop(&hErrorHandler, 0xDEAD, ERROR_SEVERITY_ERROR);
-				break;
-
-			default:
-				break;
+				EH_clear(&hErrorHandler, 0x0300);
+				
+				errorsAdded++;
+			}
+			else if (elapsed_ms >= 13000 && errorsAdded == 4) {
+				/* Inject Error #2 (240ms cycle limit reached) */
+				EH_report(&hErrorHandler, 0x0500, ERROR_SEVERITY_ERROR);
+				errorsAdded++;
 			}
 		}
 
-		/* Mock application work */
+		/* 
+		 * PHASE 3 (20s+): Critical Safe State Halt
+		 */
+		if (elapsed_ms > 20000)
+		{
+			/* 
+			 * Halt the node due to a critical SAFE_STATE fault.
+			 * The system blocks here but retains CAN transmission multiplexing 
+			 * for all active errors prior to the emergency vehicle state.
+			 */
+			EH_stop(&hErrorHandler, 0xDEAD, ERROR_SEVERITY_SAFE_STATE);
+		}
+
+		/* Process background application tasks */
 		HAL_Delay(10);
 	}
 }
