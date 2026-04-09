@@ -36,7 +36,7 @@ void app_main(void)
 	{
 		/* Process queued messages (Heartbeats or Error Frames) */
 		/* Now handled by the driver's process function */
-		CAN_process(&hcan, &schedulerList);
+		CAN_HandleScheduled(&hcan, &schedulerList);
 
 		uint32_t now = HAL_GetTick();
 		if (now - lastStateChange > 5000)

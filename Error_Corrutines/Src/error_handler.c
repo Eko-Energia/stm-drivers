@@ -1,7 +1,7 @@
 /**
  * @file error_handler.c
  * @brief Error handling and reporting implementation for PERLA CAN network
- * @author AGH EKO-ENERGIA
+ * @author Antoni Wozniak (atomwoz)
  *
  * @details Implements error reporting via CAN frames.
  *          Supports bxCAN architecture.
@@ -45,7 +45,7 @@ void EH_init(EH_HandleTypeDef *hehandler, CAN_HandleTypeDef *hcanPtr, uint16_t n
 	hehandler->phcan = hcanPtr;
 	hehandler->nodeId = nodeIdVal;
 	// Error frame ID is node ID on most 6 bits of 11 bit CAN ID and messageID=0
-	hehandler->errorFrameId = hehandler->nodeId << 5;
+	hehandler->errorFrameId = hehandler->nodeId;
 	hehandler->scheduler = schedulerPtr;
 	hehandler->isInitialized = 1;
 	hehandler->isHalted = 0;
@@ -114,6 +114,17 @@ void EH_reportEx(EH_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_
 {
 	if (hehandler == NULL || !hehandler->isInitialized)
 	{
+		return;
+	}
+
+	if (hehandler->activeErrorCode == errorCode && hehandler->activeSeverity == severity)
+	{
+		if (data != NULL && dataLen > 0)
+		{
+			hehandler->activeSpecificDataLen = (dataLen > ERROR_SPECIFIC_DATA_SIZE) ? ERROR_SPECIFIC_DATA_SIZE : dataLen;
+
+			memcpy(hehandler->activeSpecificData, data, hehandler->activeSpecificDataLen);
+		}
 		return;
 	}
 
@@ -289,7 +300,7 @@ static void haltNode(EH_HandleTypeDef *hehandler)
 		// Since we have hehandler, we use it.
 		if (hehandler->scheduler != NULL && hehandler->phcan != NULL)
 		{
-			CAN_process(hehandler->phcan, hehandler->scheduler);
+			CAN_HandleScheduled(hehandler->phcan, hehandler->scheduler);
 		}
 	}
 }

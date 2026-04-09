@@ -12,7 +12,6 @@
 #ifndef EH_H
 #define EH_H
 
-#include "main.h"
 #include "can_driver.h"
 #include <stdint.h>
 
