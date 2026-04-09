@@ -62,7 +62,7 @@ inline uint8_t ADC_Continuous(ADC_HandleTypeDef* hadc){
 	#if defined(STM32F1_FAMILY)
 
 	    // returning CR2 continuous conversion data value to local variable
-	    return (uint8_t)((hadc1.Instance->CR2 >> ADC_CR2_CONT_Pos) & 0x1);
+	    return (uint8_t)((hadc->Instance->CR2 >> ADC_CR2_CONT_Pos) & 0x1);
 
 	#endif
 
