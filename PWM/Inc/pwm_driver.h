@@ -5,8 +5,11 @@
   * @author Andrzej Gondek
   */
 
+
 #ifndef PWM_SIGNAL_H
 #define PWM_SIGNAL_H
+
+#define PWM_monitorPeriodCount 4
 
 #include "main.h"
 #include <math.h>
@@ -18,10 +21,10 @@
 struct PWM_IC_signal {
     uint32_t frequency;
     volatile float duty;
-    volatile bool readFlag;
     volatile uint32_t icVal;
     bool ch1;
     TIM_IC_InitTypeDef sConfigIC;
+	uint32_t clock;
 };
 /*
  * PWM out signal
@@ -33,6 +36,10 @@ struct PWM_Out_signal{
 	float duty;
 
 };
+/*
+ *
+ */
+void PWM_IC_Monitor(struct PWM_IC_signal* signal,GPIO_TypeDef* GPIOx,uint16_t GPIO_Pin);
 /**
  * Set PWM signal up for Input Capture
  */
@@ -49,4 +56,5 @@ void PWM_IC_update(struct PWM_IC_signal *PWM, TIM_HandleTypeDef *htim);
  * Set PWM signal duty
  */
 void PWM_Out_setDuty(struct PWM_Out_signal *PWM, float duty);
+
 #endif /* PWM_SIGNAL_H */
