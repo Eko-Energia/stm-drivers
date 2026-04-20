@@ -1,7 +1,7 @@
 /**
  * @file error_handler.c
  * @brief Error handling and reporting implementation for PERLA CAN network
- * @author AGH EKO-ENERGIA
+ * @author Antoni Wozniak (atomwoz)
  *
  * @details Implements error reporting via CAN frames.
  *          Supports bxCAN architecture.
@@ -23,6 +23,7 @@
 static void haltNode(EH_HandleTypeDef *hehandler);
 static void getData_HeightbeatOK(uint8_t *data, void *context);
 static void getData_Error(uint8_t *data, void *context);
+static void updateTransmissionInterval(EH_HandleTypeDef *hehandler);
 
 /* ============================================================================
  * Initialization Functions
@@ -45,13 +46,13 @@ void EH_init(EH_HandleTypeDef *hehandler, CAN_HandleTypeDef *hcanPtr, uint16_t n
 	hehandler->phcan = hcanPtr;
 	hehandler->nodeId = nodeIdVal;
 	// Error frame ID is node ID on most 6 bits of 11 bit CAN ID and messageID=0
-	hehandler->errorFrameId = hehandler->nodeId << 5;
+	hehandler->errorFrameId = hehandler->nodeId;
 	hehandler->scheduler = schedulerPtr;
 	hehandler->isInitialized = 1;
 	hehandler->isHalted = 0;
-	hehandler->activeErrorCode = 0;
-	hehandler->activeSeverity = ERROR_SEVERITY_SAFE_STATE;
-	hehandler->activeSpecificDataLen = 0;
+	
+	hehandler->activeErrorCount = 0;
+	hehandler->currentTransmitIndex = 0;
 
 	// Add Heartbeat OK message to scheduler (1000ms period)
 	struct CAN_scheduledMsg heartbeatMsg;
@@ -117,35 +118,81 @@ void EH_reportEx(EH_HandleTypeDef *hehandler, uint16_t errorCode, errorSeverity_
 		return;
 	}
 
-	// Store error details (Overwrite standard)
-	hehandler->activeErrorCode = errorCode;
-	hehandler->activeSeverity = severity;
-	hehandler->activeSpecificDataLen = (dataLen > ERROR_SPECIFIC_DATA_SIZE) ? ERROR_SPECIFIC_DATA_SIZE : dataLen;
-	if (data != NULL && hehandler->activeSpecificDataLen > 0)
-	{
-		memcpy(hehandler->activeSpecificData, data, hehandler->activeSpecificDataLen);
-	}
-	else
-	{
-		memset(hehandler->activeSpecificData, 0, ERROR_SPECIFIC_DATA_SIZE);
+	int8_t existingIndex = -1;
+	for (uint8_t i = 0; i < hehandler->activeErrorCount; i++) {
+		if (hehandler->activeErrors[i].errorCode == errorCode) {
+			existingIndex = i;
+			break;
+		}
 	}
 
-	// Switch scheduler to Error Mode
-	CAN_RemoveScheduledMsg(hehandler->errorFrameId, hehandler->scheduler);
+	uint8_t dataL = (dataLen > ERROR_SPECIFIC_DATA_SIZE) ? ERROR_SPECIFIC_DATA_SIZE : dataLen;
 
-	struct CAN_scheduledMsg errorMsg;
-	errorMsg.header.StdId = hehandler->errorFrameId;
-	errorMsg.header.ExtId = 0;
-	errorMsg.header.IDE = CAN_ID_STD;
-	errorMsg.header.RTR = CAN_RTR_DATA;
-	errorMsg.header.DLC = ERROR_FRAME_DLC;
-	errorMsg.header.TransmitGlobalTime = DISABLE;
-	errorMsg.periodMs = ERROR_INTERVAL;
-	errorMsg.lastTick = 0;
-	errorMsg.getData = getData_Error;
-	errorMsg.context = hehandler;
+	if (existingIndex >= 0) {
+		// Update existing
+		hehandler->activeErrors[existingIndex].severity = severity;
+		hehandler->activeErrors[existingIndex].specificDataLen = dataL;
+		if (data != NULL && dataL > 0) {
+			memcpy(hehandler->activeErrors[existingIndex].specificData, data, dataL);
+		} else {
+			memset(hehandler->activeErrors[existingIndex].specificData, 0, ERROR_SPECIFIC_DATA_SIZE);
+		}
+	} else {
+		// Insert new
+		if (hehandler->activeErrorCount < MAX_ACTIVE_ERRORS) {
+			existingIndex = hehandler->activeErrorCount;
+			hehandler->activeErrorCount++;
+		} else {
+			// Find lowest severity (highest numerical enum value)
+			int8_t lowestIndex = -1;
+			errorSeverity_e lowestSev = (errorSeverity_e)-1; 
+			// Enum values: SAFE_STATE=0, ERROR=1, WARNING=2, INFO=3
+			for (uint8_t i = 0; i < hehandler->activeErrorCount; i++) {
+				if (hehandler->activeErrors[i].severity > lowestSev || lowestIndex == -1) {
+					lowestSev = hehandler->activeErrors[i].severity;
+					lowestIndex = i;
+				}
+			}
+			// If new is more severe or equally severe than the lowest severity error in queue
+			if (severity <= lowestSev) {
+				existingIndex = lowestIndex;
+			} else {
+				return; // Reject because buffer full and new error has lower priority
+			}
+		}
 
-	CAN_AddScheduledMsg(&errorMsg, hehandler->scheduler);
+		if (existingIndex >= 0) {
+			hehandler->activeErrors[existingIndex].errorCode = errorCode;
+			hehandler->activeErrors[existingIndex].severity = severity;
+			hehandler->activeErrors[existingIndex].specificDataLen = dataL;
+			if (data != NULL && dataL > 0) {
+				memcpy(hehandler->activeErrors[existingIndex].specificData, data, dataL);
+			} else {
+				memset(hehandler->activeErrors[existingIndex].specificData, 0, ERROR_SPECIFIC_DATA_SIZE);
+			}
+		}
+	}
+
+	// First error reported: Setup error scheduler message
+	if (hehandler->activeErrorCount == 1 && existingIndex == 0) {
+		CAN_RemoveScheduledMsg(hehandler->errorFrameId, hehandler->scheduler);
+
+		struct CAN_scheduledMsg errorMsg;
+		errorMsg.header.StdId = hehandler->errorFrameId;
+		errorMsg.header.ExtId = 0;
+		errorMsg.header.IDE = CAN_ID_STD;
+		errorMsg.header.RTR = CAN_RTR_DATA;
+		errorMsg.header.DLC = ERROR_FRAME_DLC;
+		errorMsg.header.TransmitGlobalTime = DISABLE;
+		errorMsg.periodMs = ERROR_INTERVAL;
+		errorMsg.lastTick = 0;
+		errorMsg.getData = getData_Error;
+		errorMsg.context = hehandler;
+
+		CAN_AddScheduledMsg(&errorMsg, hehandler->scheduler);
+	}
+
+	updateTransmissionInterval(hehandler);
 }
 
 /**
@@ -175,29 +222,44 @@ void EH_clear(EH_HandleTypeDef *hehandler, uint16_t errorCode)
 		return;
 	}
 
-	// Only clear if the code matches the active error
-	if (hehandler->activeErrorCode == errorCode)
-	{
-		hehandler->activeErrorCode = 0;
-		hehandler->activeSeverity = ERROR_SEVERITY_INFO;
-		memset(hehandler->activeSpecificData, 0, ERROR_SPECIFIC_DATA_SIZE);
+	int8_t foundIndex = -1;
+	for (uint8_t i = 0; i < hehandler->activeErrorCount; i++) {
+		if (hehandler->activeErrors[i].errorCode == errorCode) {
+			foundIndex = i;
+			break;
+		}
+	}
 
-		// Switch scheduler to Heartbeat OK Mode
-		CAN_RemoveScheduledMsg(hehandler->errorFrameId, hehandler->scheduler);
+	if (foundIndex >= 0) {
+		for (uint8_t i = foundIndex; i < hehandler->activeErrorCount - 1; i++) {
+			hehandler->activeErrors[i] = hehandler->activeErrors[i + 1];
+		}
+		hehandler->activeErrorCount--;
 
-		struct CAN_scheduledMsg heartbeatMsg;
-		heartbeatMsg.header.StdId = hehandler->errorFrameId;
-		heartbeatMsg.header.ExtId = 0;
-		heartbeatMsg.header.IDE = CAN_ID_STD;
-		heartbeatMsg.header.RTR = CAN_RTR_DATA;
-		heartbeatMsg.header.DLC = ERROR_FRAME_DLC;
-		heartbeatMsg.header.TransmitGlobalTime = DISABLE;
-		heartbeatMsg.periodMs = HEARTBEAT_INTERVAL;
-		heartbeatMsg.lastTick = 0;
-		heartbeatMsg.getData = getData_HeightbeatOK;
-		heartbeatMsg.context = hehandler;
+		if (hehandler->currentTransmitIndex >= hehandler->activeErrorCount && hehandler->activeErrorCount > 0) {
+			hehandler->currentTransmitIndex = 0;
+		}
 
-		CAN_AddScheduledMsg(&heartbeatMsg, hehandler->scheduler);
+		if (hehandler->activeErrorCount == 0) {
+			// Switch scheduler to Heartbeat OK Mode
+			CAN_RemoveScheduledMsg(hehandler->errorFrameId, hehandler->scheduler);
+
+			struct CAN_scheduledMsg heartbeatMsg;
+			heartbeatMsg.header.StdId = hehandler->errorFrameId;
+			heartbeatMsg.header.ExtId = 0;
+			heartbeatMsg.header.IDE = CAN_ID_STD;
+			heartbeatMsg.header.RTR = CAN_RTR_DATA;
+			heartbeatMsg.header.DLC = ERROR_FRAME_DLC;
+			heartbeatMsg.header.TransmitGlobalTime = DISABLE;
+			heartbeatMsg.periodMs = HEARTBEAT_INTERVAL;
+			heartbeatMsg.lastTick = 0;
+			heartbeatMsg.getData = getData_HeightbeatOK;
+			heartbeatMsg.context = hehandler;
+
+			CAN_AddScheduledMsg(&heartbeatMsg, hehandler->scheduler);
+		} else {
+			updateTransmissionInterval(hehandler);
+		}
 	}
 }
 
@@ -219,6 +281,67 @@ uint8_t EH_isInitialized(EH_HandleTypeDef *hehandler)
 {
 	if (hehandler == NULL) return 0;
 	return hehandler->isInitialized;
+}
+
+/* ============================================================================
+ * Internal Sizing Callback
+ * ============================================================================ */
+static void updateTransmissionInterval(EH_HandleTypeDef *hehandler)
+{
+	if (hehandler == NULL || hehandler->scheduler == NULL || hehandler->activeErrorCount == 0) return;
+	
+	int32_t newPeriod = 300 - ((hehandler->activeErrorCount - 1) * 30);
+	if (newPeriod < 100) newPeriod = 100;
+	
+	for (uint8_t i = 0; i < hehandler->scheduler->size; i++) {
+		if (hehandler->scheduler->list[i].header.StdId == hehandler->errorFrameId) {
+			hehandler->scheduler->list[i].periodMs = newPeriod;
+			break;
+		}
+	}
+}
+
+/* ============================================================================
+ * Diagnostic API Getter Functions
+ * ============================================================================ */
+uint8_t EH_GetAllActive(EH_HandleTypeDef *hehandler, EH_ActiveError *outArray, uint8_t maxLen)
+{
+	if (hehandler == NULL || outArray == NULL) return 0;
+
+	uint8_t copied = 0;
+	for (uint8_t i = 0; i < hehandler->activeErrorCount && copied < maxLen; i++) {
+		outArray[copied++] = hehandler->activeErrors[i];
+	}
+	return copied;
+}
+
+uint8_t EH_GetAllActiveErrors(EH_HandleTypeDef *hehandler, EH_ActiveError *outArray, uint8_t maxLen)
+{
+	if (hehandler == NULL || outArray == NULL) return 0;
+
+	uint8_t copied = 0;
+	for (uint8_t i = 0; i < hehandler->activeErrorCount && copied < maxLen; i++) {
+		if (hehandler->activeErrors[i].severity == ERROR_SEVERITY_ERROR ||
+			hehandler->activeErrors[i].severity == ERROR_SEVERITY_SAFE_STATE) 
+		{
+			outArray[copied++] = hehandler->activeErrors[i];
+		}
+	}
+	return copied;
+}
+
+uint8_t EH_GetAllActiveWarnings(EH_HandleTypeDef *hehandler, EH_ActiveError *outArray, uint8_t maxLen)
+{
+	if (hehandler == NULL || outArray == NULL) return 0;
+
+	uint8_t copied = 0;
+	for (uint8_t i = 0; i < hehandler->activeErrorCount && copied < maxLen; i++) {
+		if (hehandler->activeErrors[i].severity == ERROR_SEVERITY_WARNING) 
+		{
+			outArray[copied++] = hehandler->activeErrors[i];
+		}
+	}
+	return copied;
 }
 
 /* ============================================================================
@@ -250,26 +373,30 @@ static void getData_HeightbeatOK(uint8_t *data, void *context)
 }
 
 /**
- * @brief Callback to generate Error payload
+ * @brief Callback to multiplex and generate Error payload
  * @param data Pointer to data buffer (8 bytes)
  */
 static void getData_Error(uint8_t *data, void *context)
 {
 	EH_HandleTypeDef *hehandler = (EH_HandleTypeDef*)context;
-	if (hehandler == NULL) return;
+	if (hehandler == NULL || hehandler->activeErrorCount == 0) return;
 
-	// Construct Error payload from active error variable
-	uint16_t errorToSend = hehandler->activeErrorCode;
+	uint8_t idx = hehandler->currentTransmitIndex;
+
+	uint16_t errorToSend = hehandler->activeErrors[idx].errorCode;
+	errorSeverity_e sev = hehandler->activeErrors[idx].severity;
 
 	// Bytes 0-1: Error code
 	data[0] = (uint8_t)(errorToSend & 0xFF);
 	data[1] = (uint8_t)((errorToSend >> 8) & 0xFF);
 
 	// Byte 2: Flags
-	data[2] = ((hehandler->isHalted & 0x01) << 0) | ((hehandler->activeSeverity & 0x07) << 1);
+	data[2] = ((hehandler->isHalted & 0x01) << 0) | ((sev & 0x07) << 1);
 
 	// Bytes 3-7: Specific data
-	memcpy(&data[3], hehandler->activeSpecificData, ERROR_SPECIFIC_DATA_SIZE);
+	memcpy(&data[3], hehandler->activeErrors[idx].specificData, ERROR_SPECIFIC_DATA_SIZE);
+
+	hehandler->currentTransmitIndex = (idx + 1) % hehandler->activeErrorCount;
 }
 
 /**
@@ -289,7 +416,7 @@ static void haltNode(EH_HandleTypeDef *hehandler)
 		// Since we have hehandler, we use it.
 		if (hehandler->scheduler != NULL && hehandler->phcan != NULL)
 		{
-			CAN_process(hehandler->phcan, hehandler->scheduler);
+			CAN_HandleScheduled(hehandler->phcan, hehandler->scheduler);
 		}
 	}
 }
