@@ -21,6 +21,9 @@
 
 /* Functions' bodies ------------------------------------------------------------------------------------ */
 
+/*
+ * @brief Private function that Initialize ADC channel, when there is no DMA support, ADC is in independent mode and ADC only converts single channel | only checks if correct flag has been set
+ */
 static HAL_StatusTypeDef ADC_Init_NoDMA_Independent(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc){
 
 
@@ -33,7 +36,9 @@ static HAL_StatusTypeDef ADC_Init_NoDMA_Independent(ADC_HandleTypeDef* hadc, ADC
 }
 
 
-
+/*
+ * @brief Private function that reads ADC channels, when there is no DMA support, ADC is in independent mode and ADC converts severals channels
+ */
 static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t* rank, uint16_t* retval){
 
 	// Declaration of variable which will temporarily store sampled value
@@ -83,6 +88,46 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent(ADC_HandleTypeDef* ha
 
     // returning Error status when sampled value is not in safe bounds
     return HAL_ERROR;
+}
+
+/*
+ * @brief Private function that reads ADC channel, when there is no DMA support, ADC is in independent mode and ADC only converts single channel
+ */
+static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent_SingleConversion(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint16_t* retval){
+
+	// initializing temporary variable to store read value before checking if it's correct
+	uint16_t tempValue = 0;
+
+	// starting ADC
+	if(HAL_ADC_Start(hadc) != HAL_OK){
+		return HAL_ERROR;
+	}
+
+	// Starting polling - ADC now reads channel
+	if(HAL_ADC_PollForConversion(hadc, ADC_POLLING_TIMEOUT) == HAL_OK){
+
+		tempValue = HAL_ADC_GetValue(hadc);
+
+	}else{
+
+		// when error occurred while polling then error status is returned
+		return HAL_ERROR;
+	}
+
+
+	// checking if read value is correct
+	if(tempValue <= ADC_Resolution(hadc)){
+
+		// assigning read value to retval
+		*retval = tempValue;
+
+		// returning OK status
+		return HAL_OK;
+
+	}
+
+	// when something went wrong, return error status
+	return HAL_ERROR;
 }
 
 
@@ -249,7 +294,19 @@ HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTyp
         // Driver does not support different reading mode without DMA usage, so it returns error
     	}else{
 
-    		return HAL_ERROR;
+    		//  if flag is not set while working with several channels, then error is returned
+    		if(cadc->numberOfSelectedChannels > 1){
+
+    			return HAL_ERROR;
+
+    		}else{
+
+    			// When single conversion is only set, correct read mode is called
+    			if(ADC_ReadChannel_NoDMA_Independent_SingleConversion(hadc, cadc, retval) != HAL_OK){
+    				return HAL_ERROR;
+    			}
+
+    		}
 
     	}
     }else{
@@ -257,8 +314,6 @@ HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTyp
     	// For now return error status, cause there is no implementation for reading with DMA support
         return HAL_ERROR;
     }
-
-
 
 	return HAL_OK;
 }
