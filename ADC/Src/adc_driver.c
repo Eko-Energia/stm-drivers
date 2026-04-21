@@ -110,10 +110,17 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent_SingleConversion(ADC_
 
 	}else{
 
+		// stop ADC before returning error to leave peripheral in known state
+		HAL_ADC_Stop(hadc);
+
 		// when error occurred while polling then error status is returned
 		return HAL_ERROR;
 	}
 
+	// Stopping ADC to reset sequencer
+	if(HAL_ADC_Stop(hadc) != HAL_OK){
+		return HAL_ERROR;
+	}
 
 	// checking if read value is correct
 	if(tempValue <= ADC_Resolution(hadc)){
