@@ -118,7 +118,7 @@ uint16_t ADC_Resolution(ADC_HandleTypeDef* hadc){
        return (4095);
    #elif defined(STM32F3_FAMILY)
 
-       uint8_t res = (uint16_t)((hadc->Instance->CFGR >> ADC_CFGR_RES_Pos) & ADC_CFGR_RES_Msk);
+       uint8_t res = (uint16_t)((hadc->Instance->CFGR >> ADC_CFGR_RES_Pos) & ADC_CFGR_RES_Mask);
 
        return ((res == 0x0) ? 4095 : ((res == 0x1) ? 1023 : ((res == 0x2) ? 255 : 63)));
 
