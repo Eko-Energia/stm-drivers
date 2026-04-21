@@ -40,7 +40,7 @@
     #define ADC_SQR1_4_OFFSET     (14)       //< Offset in reading SQR3 reg of ADC - used in shifting bits while reading ranks 10 - 14, cause for loop would trigger end of bound error
     #define ADC_SQR_DATA_RES      (6)        //< Resolution of channel number in regs - generally 5 bits of data
     #define ADC_SQR1_L_OFFSET     (1)        //< Offset in reading SQR1 reg of ADC, because on first bits of SQR1 L data is stored
-    #define ADC_CFGR_RES_Msk      (0x3)      //< Data resolution of stored ADC's resolution param
+    #define ADC_CFGR_RES_Mask      (0x3)      //< Data resolution of stored ADC's resolution param
 #endif
 
 #define ADC_SQR_DATA_Msk          (0x1F)     //< Mask for channel number in regs - generally 4:0 bits of data so 11111

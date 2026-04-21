@@ -26,9 +26,20 @@ extern "C" {
 #endif
 
 
-/* Private constant macros -------------------------------------------------------------------------------------------- */
+/* Public constant macros -------------------------------------------------------------------------------------------- */
+
+/*
+ * ADC1 configuration macros section
+ */
 #define ADC1_USED_CHANNELS (3)  //< Macro defines number of channels for ADC1,
+#define ADC1_SAMPLING      (4)  //< Macro defines number of measures of one channel to be averaged
+
+/*
+ * ADC2 configuration macros section
+ */
 #define ADC2_USED_CHANNELS (3)  //< Macro defines number of channels for ADC2,
+#define ADC2_SAMPLING      (4)  //< Macro defines number of measures of one channel to be averaged
+
 
 #ifdef __cplusplus
 }
