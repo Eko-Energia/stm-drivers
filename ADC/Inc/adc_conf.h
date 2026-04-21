@@ -21,8 +21,6 @@
 
 #pragma once
 
-#include "adc.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
