@@ -265,7 +265,7 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* 
 
 HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t channel, uint16_t* retval){
 
-	if(hadc == NULL || retval == NULL){
+	if(hadc == NULL || retval == NULL || cadc == NULL){
 		return HAL_ERROR;
 	}
 
