@@ -24,7 +24,7 @@
 /*
  * @brief Private function that Initialize ADC channel, when there is no DMA support, ADC is in independent mode and ADC only converts single channel | only checks if correct flag has been set
  */
-static HAL_StatusTypeDef ADC_Init_NoDMA_Independent(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc){
+static HAL_StatusTypeDef ADC_Init_NoDMA_Independent(ADC_HandleTypeDef* hadc){
 
 
     // Checking of correct number of discontinuous conversion is set
@@ -93,7 +93,7 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent(ADC_HandleTypeDef* ha
 /*
  * @brief Private function that reads ADC channel, when there is no DMA support, ADC is in independent mode and ADC only converts single channel
  */
-static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent_SingleConversion(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint16_t* retval){
+static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent_SingleConversion(ADC_HandleTypeDef* hadc, uint16_t* retval){
 
 	// initializing temporary variable to store read value before checking if it's correct
 	uint16_t tempValue = 0;
@@ -250,7 +250,7 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* 
 	if(ADC_Discontinuous(hadc) == ENABLE){
 
 		// Checking if User made correct config in .ioc file
-		if(ADC_Init_NoDMA_Independent(hadc, cadc) != HAL_OK){
+		if(ADC_Init_NoDMA_Independent(hadc) != HAL_OK){
 			return HAL_ERROR;
 		}
 	}
@@ -302,7 +302,7 @@ HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTyp
     		}else{
 
     			// When single conversion is only set, correct read mode is called
-    			if(ADC_ReadChannel_NoDMA_Independent_SingleConversion(hadc, cadc, retval) != HAL_OK){
+    			if(ADC_ReadChannel_NoDMA_Independent_SingleConversion(hadc, retval) != HAL_OK){
     				return HAL_ERROR;
     			}
 
