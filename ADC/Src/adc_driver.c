@@ -164,10 +164,15 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent_SingleConversion(ADC_
 
 		// stop ADC before returning error to leave peripheral in known state
 		HAL_ADC_Stop(hadc);
+
 		// when error occurred while polling then error status is returned
 		return HAL_ERROR;
 	}
 
+	// Stopping ADC to reset sequencer
+	if(HAL_ADC_Stop(hadc) != HAL_OK){
+		return HAL_ERROR;
+	}
 
 	// Stopping ADC to reset sequencer
 	if(HAL_ADC_Stop(hadc) != HAL_OK){
@@ -196,8 +201,13 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent_SingleConversion(ADC_
  */
 static HAL_StatusTypeDef ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, ADC_BufferTypeDef* badc, uint8_t rank, uint16_t* retval){
 
-	// security check if user correctly configured buffer size
-	if(ADC1_BUFFER_SIZE < 1 || ADC2_BUFFER_SIZE < 1){
+	uint32_t samples = 0;
+	uint32_t channels = 0;
+	uint16_t* buffer = NULL;
+	uint32_t bufferSize = 0;
+
+	// security check if user correctly configured pointers and buffer size
+	if(hadc == NULL || cadc == NULL || badc == NULL || retval == NULL || ADC1_BUFFER_SIZE < 1 || ADC2_BUFFER_SIZE < 1){
 		return HAL_ERROR;
 	}
 
@@ -205,19 +215,22 @@ static HAL_StatusTypeDef ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_ChannelsConf
 	// init of variable to store sum of measures from one channel
 	uint32_t value = 0;
 
-	// variable stores number of samples
-	uint8_t samples = 0;
-
 	if(hadc->Instance == ADC1){
 
 		// reading ADC1 buffer amount of samples for one channel
 		samples = ADC1_SAMPLING;
+		channels = ADC1_USED_CHANNELS;
+		buffer = badc->adc1Values;
+		bufferSize = ADC1_BUFFER_SIZE;
 
 
 	}else if(hadc->Instance == ADC2){
 
 		// reading ADC2 buffer amount of samples for one channel
 		samples = ADC2_SAMPLING;
+		channels = ADC2_USED_CHANNELS;
+		buffer = badc->adc2Values;
+		bufferSize = ADC2_BUFFER_SIZE;
 
 	}else{
 
@@ -225,14 +238,30 @@ static HAL_StatusTypeDef ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_ChannelsConf
 		return HAL_ERROR;
 	}
 
+	if(samples == 0 || channels == 0){
+		return HAL_ERROR;
+	}
+
+	// Runtime check protects against mismatched .ioc sequencer config vs adc_conf.h macros.
+	if(rank >= cadc->numberOfSelectedChannels || (uint32_t)cadc->numberOfSelectedChannels != channels){
+		return HAL_ERROR;
+	}
+
+	if(bufferSize != (channels * samples)){
+		return HAL_ERROR;
+	}
 
 
 	// summing measures for one channel
 	/*
 	 * @note i increments up to samples, because it defines amount of iterations, for loops need to do to access all samples despite of channel's rank
 	 */
-	for(uint8_t i = 0; i < samples; ++i){
-		value += (hadc->Instance == ADC1) ? badc->adc1Values[(uint8_t)((i * cadc->numberOfSelectedChannels) + rank)] : badc->adc2Values[i * cadc->numberOfSelectedChannels + rank];
+	for(uint32_t i = 0; i < samples; ++i){
+		uint32_t index = (i * (uint32_t)cadc->numberOfSelectedChannels) + rank;
+		if(index >= bufferSize){
+			return HAL_ERROR;
+		}
+		value += buffer[index];
 	}
 
 	// calculating averaged value
