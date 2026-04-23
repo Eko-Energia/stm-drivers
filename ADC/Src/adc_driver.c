@@ -444,9 +444,6 @@ HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTyp
     	if(ADC_Averaging(hadc, cadc, badc, rank, retval) == HAL_OK){
     		return HAL_OK;
     	}
-
-    	// For now return error status, cause there is no implementation for reading with DMA support
-        return HAL_OK;
     }
 
 	return HAL_ERROR;
