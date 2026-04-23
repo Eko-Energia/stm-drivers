@@ -8,8 +8,8 @@
 #ifndef CAN_DRIVER_H
 #define CAN_DRIVER_H
 
-#include "main.h"
 #include "can_id_list.h"
+#include "main.h"
 #include <stdio.h>
 
 /**
@@ -37,6 +37,15 @@
     uint64_t: __builtin_bswap64(x),                  \
     int64_t:  __builtin_bswap64(x)                   \
 )
+
+/**
+ * @brief Extracts the n-th byte from variable x.
+ * @warning Do not pass expressions with side effects (e.g., x++) as arguments,
+ * as they may be evaluated multiple times.
+ * @param x The source variable (uint8_t, uint16_t, or uint32_t).
+ * @param n The byte index (0 for LSB).
+ */
+#define GET_BYTE(x, n) ((uint8_t)(((x) >> ((n) * 8u)) & 0xFFu))
 
 /**
  * Periodic CAN message
@@ -71,19 +80,36 @@ struct CAN_scheduledMsgList
  *
  * @param hcan      Pointer to CAN handle
  */
-void CAN_init(CAN_HandleTypeDef *hcan);
+void CAN_Init(CAN_HandleTypeDef *hcan);
 
 /**
- * @brief Get configured Node ID
- * @return Current Node ID
+ * @brief Process all scheduled CAN messages (call in main loop)
+ *
+ * @param hcanPtr      Pointer to CAN handle
+ * @param scheduler    Pointer to the message scheduler
  */
-uint32_t CAN_getNodeId(void);
+void CAN_HandleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList *scheduler);
 
 /**
  * Functions for scheduled messages
  */
-HAL_StatusTypeDef CAN_addScheduledMessage(struct CAN_scheduledMsg msg, struct CAN_scheduledMsgList *buffer);
 
-HAL_StatusTypeDef CAN_removeScheduledMessage(uint32_t id, struct CAN_scheduledMsgList *buffer);
+/**
+ * @brief Add new message to the periodic buffer
+ *
+ * @param msg      Pointer to the message to add
+ * @param buffer   Pointer to the buffer that holds messages
+ * @retval HAL_StatusTypeDef   State of the operation
+ */
+HAL_StatusTypeDef CAN_AddScheduledMsg(const struct CAN_scheduledMsg *msg, struct CAN_scheduledMsgList *buffer);
 
-#endif /* INC_CAN_DRIVER_H_ */
+/**
+ * @brief Remove message from the periodic buffer
+ *
+ * @param id       ID of the message to remove
+ * @param buffer   Pointer to the buffer that holds messages
+ * @retval HAL_StatusTypeDef   State of the operation
+ */
+HAL_StatusTypeDef CAN_RemoveScheduledMsg(uint32_t id, struct CAN_scheduledMsgList *buffer);
+
+#endif /* CAN_DRIVER_H */
