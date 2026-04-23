@@ -89,6 +89,13 @@ ADC_ChannelsConfigTypeDefs cadc1;         //< Channels struct object - stores ra
 ADC_ChannelsConfigTypeDefs cadc2;         //< Channels struct object - stores rank configurations for ADC2
 ```
 
+> [!CAUTION]
+> While working with **DMA** (automatic mode), please initialize **ADC_BufferTypeDef badc**. It's common for ADCs. There is \*_no need_ to initialize it for each **ADCs**.
+
+```c
+ADC_BufferTypeDef badc;                   //< DMA buffer for ADC1 and ADC2
+```
+
 2.  Call the `ADC_Init` function for all ADCs you are working with.
 
 ```c
@@ -97,7 +104,7 @@ ADC_ChannelsConfigTypeDefs cadc2;         //< Channels struct object - stores ra
  * @param  hadc - handle to ADC instance
  * @retval status of HAL's operation
  */
-HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc);
+HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, ADC_BufferTypeDef* badc);
 ```
 
 3.  In **adc_conf.h** change `ADCx_USED_CHANNELS` stored number, to amount of selected channels in **.ioc file**.
@@ -106,6 +113,14 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* 
 ```c
 #define ADC1_USED_CHANNELS (3)  //< Macro defines number of channels for ADC1,
 #define ADC2_USED_CHANNELS (3)  //< Macro defines number of channels for ADC2,
+```
+
+4.  In **adc_conf.h** change `ADCx_SAMPLING` stored number, to amount of channel's samples You want to be averaged - **must be even**
+    > **NOTE:** In `ADCx_SAMPLING`, **x** stand for index of ADC instance - can be `ADC1_..` or `ADC2_...`.
+
+```c
+#define ADC1_SAMPLING      (4)  //< Macro defines number of measures of one channel to be averaged
+#define ADC2_SAMPLING      (4)  //< Macro defines number of measures of one channel to be averaged
 ```
 
 ---
