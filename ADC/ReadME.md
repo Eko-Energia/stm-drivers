@@ -70,6 +70,13 @@ Use this mode for high-speed, background data collection without CPU interventio
 - **Scan Conversion Mode**: Must be `Enabled`.
 - **Number of Conversions**: Must be equal to the number of active channels.
 
+> [!CAUTION]
+> **ADC Clock & DMA Interrupt Overload**
+> Pay close attention to the **ADC1/ADC2 clock configuration** in the `.ioc` file.
+> Setting the clock frequency too high while using Continuous Mode can trigger
+> DMA interrupts so frequently that the CPU spends all its cycles in the ISR.
+> As a consequence, the main application thread or API functions **may become permanently starved (blocked)**.
+
 ## Manual
 
 _The detailed manual will be expanded as development progresses._

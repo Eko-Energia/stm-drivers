@@ -4,7 +4,7 @@
   * @author  Bartosz Rychlicki
   * @author  AGH Eko-Energia
 
-  * @Title   Universal driver for ADC peripheral (Built for F1, F2, F3 and F4 families, but can be implemented for all families)
+  * @Title   Universal driver for ADC peripheral (Built for F1 and F3 families, but can be implemented for all families)
 
   * @brief   This file contains common defines, flags and macros that are used to prevent high quality of driver's functionalities.
   * 		 All flags, macros and typedefs are built to sense ADC settings and its linked DMA settings
@@ -43,12 +43,19 @@ typedef struct{
 	uint8_t  numberOfSelectedChannels;                                      //< Number of detected channels, which user selected to use
 }ADC_ChannelsConfigTypeDefs;
 
+/*
+ *	@brief Structure stores converted ADC values with DMA usage
+ */
+typedef struct{
+
+
+    uint16_t adc1Values[ADC1_BUFFER_SIZE];									//< Table of ADC1's channels' read values
+	uint16_t adc2Values[ADC1_BUFFER_SIZE];									//< Table of ADC2's channels' read values
+
+}ADC_BufferTypeDef;
+
 
 /* Private constant macros -------------------------------------------------------------------------------------------- */
-
-
-#define ADC1_BUFFER_SIZE 	   (ADC1_USED_CHANNELS * ADC_CONVERTED_MEASURES) //< Macro stores data buffer length
-#define ADC2_BUFFER_SIZE 	   (ADC2_USED_CHANNELS * ADC_CONVERTED_MEASURES) //< Macro stores data buffer length
 
 
 /* Functions' prototypes ------------------------------------------------------------------------------------ */
@@ -58,7 +65,7 @@ typedef struct{
  * @param  hadc - handle to ADC instance
  * @retval status of HAL's operation
  */
-HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc);
+HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, ADC_BufferTypeDef* badc);
 
 
 /*
@@ -69,7 +76,7 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* 
  * @param  *retval - pointer to value, which stores converted value
  * @retval status of HAL's operation
  */
-HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t channel, uint16_t* retval);
+HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, ADC_BufferTypeDef* badc, uint8_t channel, uint16_t* retval);
 
 
 /*
@@ -79,7 +86,7 @@ HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTyp
  * @param  rank     - pointer to conversion channel, which value is going to be read
  * @param  *retval  - pointer to variable that will store pin voltage for future operations
  */
-HAL_StatusTypeDef ADC_Get_PinVoltage(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t channel, float* retval);
+HAL_StatusTypeDef ADC_Get_PinVoltage(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, ADC_BufferTypeDef* badc, uint8_t channel, float* retval);
 
 /*
  * @brief  Function extracts information about channels configuration from ADC registers - it simply read channel number for each rank and amout of channels in use

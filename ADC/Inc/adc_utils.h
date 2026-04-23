@@ -27,31 +27,55 @@
 
 
 /* Macros -------------------------------------------------------------------------------------------------- */
-#define ADC_MAX_RANKS_NUMBER      (16)       //< Maximum number of ADC ranks
 
+/*
+ * @defgroup ADC Macros, which definitions depends on type of MCU used in application layer
+ * @brief    ADC macros which define offsets between SQRx regs while reading channels configuration for regular group
+ */
 #if defined(STM32F1_FAMILY)
+
     #define ADC_SQR3_2_OFFSET     (6)        //< Offset in reading SQR3 reg of ADC - used in shifting bits while reading ranks 1 - 6, cause for loop would trigger end of bound error
     #define ADC_SQR3_1_OFFSET     (12)       //< Offset in reading SQR2 reg of ADC - used in shifting bits while reading ranks 7 - 12, cause for loop would trigger end of bound error
     #define ADC_SQR_DATA_RES      (5)        //< Resolution of channel number in regs - generally 5 bits of data
 
 #elif defined(STM32F3_FAMILY)
+
     #define ADC_SQR1_2_OFFSET     (4)        //< Offset in reading SQR1 reg of ADC - used in shifting bits while reading ranks 1 - 4, cause for loop would trigger end of bound error
     #define ADC_SQR1_3_OFFSET     (9)        //< Offset in reading SQR3 reg of ADC - used in shifting bits while reading ranks 5 - 9, cause for loop would trigger end of bound error
     #define ADC_SQR1_4_OFFSET     (14)       //< Offset in reading SQR3 reg of ADC - used in shifting bits while reading ranks 10 - 14, cause for loop would trigger end of bound error
     #define ADC_SQR_DATA_RES      (6)        //< Resolution of channel number in regs - generally 5 bits of data
     #define ADC_SQR1_L_OFFSET     (1)        //< Offset in reading SQR1 reg of ADC, because on first bits of SQR1 L data is stored
-    #define ADC_CFGR_RES_Mask      (0x3)      //< Data resolution of stored ADC's resolution param
+    #define ADC_CFGR_RES_Mask     (0x3)      //< Data resolution of stored ADC's resolution param
+
 #endif
 
-#define ADC_SQR_DATA_Msk          (0x1F)     //< Mask for channel number in regs - generally 4:0 bits of data so 11111
-#define ADC_SQR_L_DATA_res        (0xF)
 
+/*
+ * @defgroup ADC Macros, which definitions does not depend on type of MCU used in application layer
+ * @brief    ADC macros which define provides correct casting of values read from ADC registers and polling timeout, etc.
+ */
+#define ADC_SQR_DATA_Msk          (0x1F)     //< Mask for channel number in regs - generally 4:0 bits of data so 11111
+#define ADC_SQR_L_DATA_res        (0xF)      //< Resolution of L Data in SQRx regs of ADC
+#define ADC_MAX_RANKS_NUMBER      (16)       //< Maximum number of ADC ranks
 #define ADC_POLLING_TIMEOUT       (10)       //< Macro stores max ADC polling timeout, to prevent endless blocking by polling
 
-#define STM32_VCC                 (3.3f)	   //< STM32 supply voltage for reading ADC's pins' voltages
+
+/*
+ * @defgroup DMA Macros, which definitions are strongly related to DMA regs reading mode status
+ * @brief    DMA macros which define provides correct checking DMA mode
+ */
+#define DMA_MODE_NORMAL			  (0)        //< DMA Mode definition - normal: every time DMA request polling for ADC
+#define DMA_MODE_CIRCULAR		  (1)        //< DMA Mode definition - circular:  DMA automatically request polling for ADC
+#define DMA_MODE_Mask             (1)        //< DMA mode mask to provide correct casting while reading DMA's regs
+
+/*
+ * @defgroup MCUs Macros, which definitions are strongly related to MCUs physical parameters
+ * @brief    MCUs macros which define provides correct reading voltage on exact pin
+ */
+#define STM32_VCC                 (3.3f)	 //< STM32 supply voltage for reading ADC's pins' voltages
 #define STM32_GND                 (0.0f)     //< STM32 ground voltage for providing reference while reading ADC's pins' voltages
 
-#define ADC_CONVERTED_MEASURES   (1)  		//< Macro defines amount of measures, that will be used to average value converted by ADC on exact channel
+
 
 
 /* Exported variables --------------------------------------------------------------------------------------- */
@@ -130,5 +154,16 @@ uint8_t ADC_DMA_ENABLED(ADC_HandleTypeDef* hadc);
 
  */
 uint16_t ADC_Resolution(ADC_HandleTypeDef* hadc);
+
+/*
+ * @ brief Function that returns binary type of DMA mode
+
+ * @param hadc - pointer to ADC handle
+ * @ return value:
+   - 0 - Normal Mode
+   - 1 - Circular Mode
+
+ */
+uint8_t ADC_DMA_GetMode(ADC_HandleTypeDef* hadc);
 
 #endif /* ADC_UTILS_H_ */

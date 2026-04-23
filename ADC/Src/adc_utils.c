@@ -116,16 +116,32 @@ uint16_t ADC_Resolution(ADC_HandleTypeDef* hadc){
 
        // because F1 MCUs does not have settings to change their resolution, they have constant value 4095 of resolution
        return (4095);
+
    #elif defined(STM32F3_FAMILY)
 
        uint8_t res = (uint16_t)((hadc->Instance->CFGR >> ADC_CFGR_RES_Pos) & ADC_CFGR_RES_Mask);
 
        return ((res == 0x0) ? 4095 : ((res == 0x1) ? 1023 : ((res == 0x2) ? 255 : 63)));
 
-
    #endif
 
 
+  // error state
   return 0xFFFF;
 }
 
+uint8_t ADC_DMA_GetMode(ADC_HandleTypeDef* hadc){
+
+	#if defined(STM32F1_FAMILY)
+
+		return (((hadc->DMA_Handle->Instance->CCR >> DMA_CCR_CIRC_Pos) & DMA_MODE_Mask) == 0) ? DMA_MODE_NORMAL : DMA_MODE_CIRCULAR;
+
+	#elif defined(STM32F3_FAMILY)
+
+		return (((hadc->DMA_Handle->Instance->CCR >> DMA_CCR_CIRC_Pos) & DMA_MODE_Mask) == 0) ? DMA_MODE_NORMAL : DMA_MODE_CIRCULAR;
+
+	#endif
+
+	// error state
+	return 0xFF;
+}
