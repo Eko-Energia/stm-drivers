@@ -56,6 +56,7 @@
  */
 #define ADC_SQR_DATA_Msk          (0x1F)     //< Mask for channel number in regs - generally 4:0 bits of data so 11111
 #define ADC_SQR_L_DATA_res        (0xF)      //< Resolution of L Data in SQRx regs of ADC
+#define ADC_CONT_Mask			  (1)        //< Mask for reading continuous flag state
 #define ADC_MAX_RANKS_NUMBER      (16)       //< Maximum number of ADC ranks
 #define ADC_POLLING_TIMEOUT       (10)       //< Macro stores max ADC polling timeout, to prevent endless blocking by polling
 

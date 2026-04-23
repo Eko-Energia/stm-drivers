@@ -53,10 +53,15 @@ uint8_t ADC_Continuous(ADC_HandleTypeDef* hadc){
 	}
 
 	// extracting data of registers, correct for F1 family
+
 	#if defined(STM32F1_FAMILY)
 
 	    // returning CR2 continuous conversion data value to local variable
-	    return (uint8_t)((hadc->Instance->CR2 >> ADC_CR2_CONT_Pos) & 0x1);
+	    return ((uint8_t)((hadc->Instance->CR2 >> ADC_CR2_CONT_Pos) & ADC_CONT_Mask) == DISABLE) ? DISABLE : ENABLE;
+
+	#elif defined(STM32F3_FAMILY)
+
+	    return ((uint8_t)((hadc->Instance->CFGR >> ADC_CFGR_CONT_Pos ) & ADC_CONT_Mask) == DISABLE) ? DISABLE : ENABLE;
 
 	#endif
 

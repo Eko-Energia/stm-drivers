@@ -50,6 +50,16 @@ static HAL_StatusTypeDef ADC_Init_DMA(ADC_HandleTypeDef* hadc, ADC_ChannelsConfi
 		return HAL_ERROR;
 	}
 
+	/*
+	 * @brief Checking if dma continuous request is enabled
+	 * @note This flag is only on F3 cores
+	 */
+	#if defined(STM32F3_FAMILY)
+		if(DISABLE == hadc->Init.DMAContinuousRequests){
+			return HAL_ERROR;
+		}
+	#endif
+
 	// launching DMA for ADC
 	if(hadc->Instance == ADC1){
 
@@ -360,7 +370,7 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* 
 	if(ADC_DMA_ENABLED(hadc) == DISABLE){
 
 		// Init ADC for correct work mode
-		if(ADC_Discontinuous(hadc) == ENABLE){
+		if(ADC_Discontinuous(hadc) == ENABLE && ADC_Continuous(hadc) == DISABLE){
 
 			// Checking if User made correct config in .ioc file
 			if(ADC_Init_NoDMA_Independent(hadc) != HAL_OK){

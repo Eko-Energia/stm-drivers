@@ -62,6 +62,7 @@ Use this mode for high-speed, background data collection without CPU interventio
 
 - **Continuous Conversion Mode**: Set to `Enabled`.
 - **Discontinuous Conversion Mode**: Set to `Disabled`.
+- **DMA Continuous Request**: Set to `Enabled`.
 - **DMA Settings**:
   1. Go to the **DMA Settings** tab (or GPDMA for H5 series).
   2. Add a new DMA request for the specific ADC instance.
