@@ -38,10 +38,10 @@ static HAL_StatusTypeDef ADC_Init_NoDMA_Independent(ADC_HandleTypeDef* hadc){
 /*
  * @brief Private function that Initialize ADC with DMA support
  */
-static HAL_StatusTypeDef ADC_Init_DMA(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, ADC_BufferTypeDef* badc){
+static HAL_StatusTypeDef ADC_Init_DMA(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc){
 
 	// security check
-	if(NULL == hadc || NULL == cadc || NULL == badc || NULL == hadc->DMA_Handle){
+	if(NULL == hadc || NULL == badc || NULL == hadc->DMA_Handle){
 		return HAL_ERROR;
 	}
 
@@ -164,15 +164,10 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent_SingleConversion(ADC_
 
 		// stop ADC before returning error to leave peripheral in known state
 		HAL_ADC_Stop(hadc);
-
 		// when error occurred while polling then error status is returned
 		return HAL_ERROR;
 	}
 
-	// Stopping ADC to reset sequencer
-	if(HAL_ADC_Stop(hadc) != HAL_OK){
-		return HAL_ERROR;
-	}
 
 	// Stopping ADC to reset sequencer
 	if(HAL_ADC_Stop(hadc) != HAL_OK){
@@ -201,13 +196,8 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent_SingleConversion(ADC_
  */
 static HAL_StatusTypeDef ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, ADC_BufferTypeDef* badc, uint8_t rank, uint16_t* retval){
 
-	uint32_t samples = 0;
-	uint32_t channels = 0;
-	uint16_t* buffer = NULL;
-	uint32_t bufferSize = 0;
-
-	// security check if user correctly configured pointers and buffer size
-	if(hadc == NULL || cadc == NULL || badc == NULL || retval == NULL || ADC1_BUFFER_SIZE < 1 || ADC2_BUFFER_SIZE < 1){
+	// security check if user correctly configured buffer size
+	if(ADC1_BUFFER_SIZE < 1 || ADC2_BUFFER_SIZE < 1){
 		return HAL_ERROR;
 	}
 
@@ -215,22 +205,19 @@ static HAL_StatusTypeDef ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_ChannelsConf
 	// init of variable to store sum of measures from one channel
 	uint32_t value = 0;
 
+	// variable stores number of samples
+	uint8_t samples = 0;
+
 	if(hadc->Instance == ADC1){
 
 		// reading ADC1 buffer amount of samples for one channel
 		samples = ADC1_SAMPLING;
-		channels = ADC1_USED_CHANNELS;
-		buffer = badc->adc1Values;
-		bufferSize = ADC1_BUFFER_SIZE;
 
 
 	}else if(hadc->Instance == ADC2){
 
 		// reading ADC2 buffer amount of samples for one channel
 		samples = ADC2_SAMPLING;
-		channels = ADC2_USED_CHANNELS;
-		buffer = badc->adc2Values;
-		bufferSize = ADC2_BUFFER_SIZE;
 
 	}else{
 
@@ -238,30 +225,14 @@ static HAL_StatusTypeDef ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_ChannelsConf
 		return HAL_ERROR;
 	}
 
-	if(samples == 0 || channels == 0){
-		return HAL_ERROR;
-	}
-
-	// Runtime check protects against mismatched .ioc sequencer config vs adc_conf.h macros.
-	if(rank >= cadc->numberOfSelectedChannels || (uint32_t)cadc->numberOfSelectedChannels != channels){
-		return HAL_ERROR;
-	}
-
-	if(bufferSize != (channels * samples)){
-		return HAL_ERROR;
-	}
 
 
 	// summing measures for one channel
 	/*
 	 * @note i increments up to samples, because it defines amount of iterations, for loops need to do to access all samples despite of channel's rank
 	 */
-	for(uint32_t i = 0; i < samples; ++i){
-		uint32_t index = (i * (uint32_t)cadc->numberOfSelectedChannels) + rank;
-		if(index >= bufferSize){
-			return HAL_ERROR;
-		}
-		value += buffer[index];
+	for(uint8_t i = 0; i < samples; ++i){
+		value += (hadc->Instance == ADC1) ? badc->adc1Values[(uint8_t)((i * cadc->numberOfSelectedChannels) + rank)] : badc->adc2Values[i * cadc->numberOfSelectedChannels + rank];
 	}
 
 	// calculating averaged value
@@ -387,7 +358,7 @@ static HAL_StatusTypeDef ADC_ChannelsConfig(ADC_HandleTypeDef* hadc, ADC_Channel
 HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, ADC_BufferTypeDef* badc){
 
 	// checking if user passed null pointer to ADC handle or cadc structure
-	if(NULL == hadc || NULL == cadc){
+	if(NULL == hadc || NULL == cadc || NULL){
 		return HAL_ERROR;
 	}
 
@@ -411,7 +382,7 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* 
 			return HAL_ERROR;
 		}
 	}else{
-		if(ADC_Init_DMA(hadc, cadc, badc) != HAL_OK){
+		if(ADC_Init_DMA(hadc, badc) != HAL_OK){
 			return HAL_ERROR;
 		}
 	}
