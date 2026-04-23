@@ -186,8 +186,8 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent_SingleConversion(ADC_
  */
 static HAL_StatusTypeDef ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, ADC_BufferTypeDef* badc, uint8_t rank, uint16_t* retval){
 
-	uint8_t samples = 0;
-	uint8_t channels = 0;
+	uint32_t samples = 0;
+	uint32_t channels = 0;
 	uint16_t* buffer = NULL;
 	uint32_t bufferSize = 0;
 
@@ -223,7 +223,16 @@ static HAL_StatusTypeDef ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_ChannelsConf
 		return HAL_ERROR;
 	}
 
-	if(samples == 0 || channels == 0 || rank >= cadc->numberOfSelectedChannels || cadc->numberOfSelectedChannels != channels || bufferSize != ((uint32_t)channels * (uint32_t)samples)){
+	if(samples == 0 || channels == 0){
+		return HAL_ERROR;
+	}
+
+	// Runtime check protects against mismatched .ioc sequencer config vs adc_conf.h macros.
+	if(rank >= cadc->numberOfSelectedChannels || (uint32_t)cadc->numberOfSelectedChannels != channels){
+		return HAL_ERROR;
+	}
+
+	if(bufferSize != (channels * samples)){
 		return HAL_ERROR;
 	}
 
@@ -233,7 +242,10 @@ static HAL_StatusTypeDef ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_ChannelsConf
 	 * @note i increments up to samples, because it defines amount of iterations, for loops need to do to access all samples despite of channel's rank
 	 */
 	for(uint32_t i = 0; i < samples; ++i){
-		uint32_t index = (i * cadc->numberOfSelectedChannels) + rank;
+		uint32_t index = (i * (uint32_t)cadc->numberOfSelectedChannels) + rank;
+		if(index >= bufferSize){
+			return HAL_ERROR;
+		}
 		value += buffer[index];
 	}
 
