@@ -50,7 +50,7 @@ typedef struct{
 
 
     uint16_t adc1Values[ADC1_BUFFER_SIZE];									//< Table of ADC1's channels' read values
-	uint16_t adc2Values[ADC1_BUFFER_SIZE];									//< Table of ADC2's channels' read values
+	uint16_t adc2Values[ADC2_BUFFER_SIZE];									//< Table of ADC2's channels' read values
 
 }ADC_BufferTypeDef;
 
