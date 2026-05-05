@@ -21,6 +21,7 @@ void LED_Handle(struct LED *led)
                 HAL_GPIO_TogglePin(led->GPIO_Port, led->GPIO_Pin);
                 led->lastTick = currentTick;
             }
+            break;
     }
 }
 
