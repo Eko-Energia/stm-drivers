@@ -24,15 +24,17 @@
 /*
  * @brief Private function that Initialize ADC channel, when there is no DMA support, ADC is in independent mode and ADC only converts single channel | only checks if correct flag has been set
  */
-static HAL_StatusTypeDef ADC_Init_NoDMA_Independent(ADC_HandleTypeDef* hadc){
+static HAL_StatusTypeDef ADC_Init_NoDMA_Independent(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc){
 
 
-    // Checking of correct number of discontinuous conversion is set
-	if(hadc->Init.NbrOfDiscConversion == 1){
-		return HAL_OK;
+    // Checking of correct number of discontinuous conversion is set in case user works witm multiple channels
+	if(cadc->numberOfSelectedChannels > 1){
+		if(hadc->Init.NbrOfDiscConversion != 1){
+			return HAL_ERROR;
+		}
 	}
 
-	return HAL_ERROR;
+	return HAL_OK;
 }
 
 /*
@@ -358,7 +360,7 @@ static HAL_StatusTypeDef ADC_ChannelsConfig(ADC_HandleTypeDef* hadc, ADC_Channel
 HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, ADC_BufferTypeDef* badc){
 
 	// checking if user passed null pointer to ADC handle or cadc structure
-	if(NULL == hadc || NULL == cadc || NULL){
+	if(NULL == hadc || NULL == cadc){
 		return HAL_ERROR;
 	}
 
@@ -370,10 +372,17 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* 
 	if(ADC_DMA_ENABLED(hadc) == DISABLE){
 
 		// Init ADC for correct work mode
-		if(ADC_Discontinuous(hadc) == ENABLE && ADC_Continuous(hadc) == DISABLE){
+		if(ADC_Continuous(hadc) == DISABLE){
+
+			// if user uses more than 1 channel, then discontinuous flag should be checked if is enabled
+			if(cadc->numberOfSelectedChannels > 1){
+				if(ADC_Discontinuous(hadc) == DISABLE){
+					return HAL_ERROR;
+				}
+			}
 
 			// Checking if User made correct config in .ioc file
-			if(ADC_Init_NoDMA_Independent(hadc) != HAL_OK){
+			if(ADC_Init_NoDMA_Independent(hadc, cadc) != HAL_OK){
 				return HAL_ERROR;
 			}
 		}else{
