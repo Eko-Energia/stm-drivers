@@ -63,12 +63,25 @@ void PWM_Out_setDuty(struct PWM_Out_signal *PWM,float duty)
  *
  * @retval None
  */
-void PWM_IC_Monitor(struct PWM_IC_signal* signal,GPIO_TypeDef* GPIOx,uint16_t GPIO_Pin) {
-    uint32_t now = HAL_GetTick();
-    uint32_t TIMEOUT_MS = (1000.0f/signal->frequency)*(float)PWM_monitorPeriodCount;
-    if (TIMEOUT_MS<1){
-    	TIMEOUT_MS = 1;
+void PWM_IC_Monitor(struct PWM_IC_signal* signal, GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin) {
+    // 1. Perform calculations if new data was captured by the interrupt
+    if (signal->dataReady) {
+        if (signal->icVal != 0) {
+            signal->duty = ((float)signal->icPulseVal * 100.0f) / (float)signal->icVal;
+        }
+        // Clear flag after processing
+        signal->dataReady = false;
+        signal->clock = HAL_GetTick();
     }
+
+    // 2. Original Timeout Monitoring Logic
+    uint32_t now = HAL_GetTick();
+    uint32_t TIMEOUT_MS = (2000.0f / signal->frequency) * (float)PWM_monitorPeriodCount;
+
+    if (TIMEOUT_MS < 1) {
+        TIMEOUT_MS = 1;
+    }
+
     if ((now - signal->clock) > TIMEOUT_MS) {
         if (HAL_GPIO_ReadPin(GPIOx, GPIO_Pin) == GPIO_PIN_SET) {
             signal->duty = 100.0f;
@@ -103,6 +116,8 @@ void PWM_IC_Init(struct PWM_IC_signal* signal,
     signal->duty = 0.0f;
     signal->frequency = frequency;
     signal->icVal = 0;
+	signal->icPulseVal = 0;   // Initialize new field
+	signal->dataReady = false; // Initialize new field
     signal->ch1 = isChannel1;
     signal->clock = HAL_GetTick();
     /* Configure input capture parameters */
@@ -170,27 +185,21 @@ void PWM_Out_Init(struct PWM_Out_signal *PWM, TIM_HandleTypeDef *htim, uint32_t 
  */
 void PWM_IC_update(struct PWM_IC_signal *PWM, TIM_HandleTypeDef *htim)
 {
-	PWM->clock = HAL_GetTick();
     if (PWM->ch1)
     {
+        // Read Period
         PWM->icVal = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
-
-        if (PWM->icVal != 0)
-        {
-            PWM->duty =
-                ((float)HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2) * 100.0f)
-                / (float)PWM->icVal;
-        }
+        // Read High Time
+        PWM->icPulseVal = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
     }
     else
     {
+        // Read Period
         PWM->icVal = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
-
-        if (PWM->icVal != 0)
-        {
-            PWM->duty =
-                ((float)HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1) * 100.0f)
-                / (float)PWM->icVal;
-        }
+        // Read High Time
+        PWM->icPulseVal = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
     }
+
+    // Raise flag for the monitor function
+    PWM->dataReady = true;
 }
