@@ -31,14 +31,16 @@ extern "C" {
 /*
  * ADC1 configuration macros section
  */
-#define ADC1_USED_CHANNELS (3)  //< Macro defines number of channels for ADC1,
-#define ADC1_SAMPLING      (4)  //< Macro defines number of measures of one channel to be averaged
+#define ADC1_USED_CHANNELS (3)                                          //< Macro defines number of channels for ADC1,
+#define ADC1_SAMPLING      (4)                                          //< Macro defines number of measures of one channel to be averaged
+#define ADC1_BUFFER_SIZE   (ADC1_USED_CHANNELS * ADC1_SAMPLING) 		//< Macro stores data buffer length
 
 /*
  * ADC2 configuration macros section
  */
-#define ADC2_USED_CHANNELS (3)  //< Macro defines number of channels for ADC2,
-#define ADC2_SAMPLING      (4)  //< Macro defines number of measures of one channel to be averaged
+#define ADC2_USED_CHANNELS (3)  										//< Macro defines number of channels for ADC2,
+#define ADC2_SAMPLING      (4)  										//< Macro defines number of measures of one channel to be averaged
+#define ADC2_BUFFER_SIZE   (ADC2_USED_CHANNELS * ADC2_SAMPLING) 		//< Macro stores data buffer length
 
 
 #ifdef __cplusplus

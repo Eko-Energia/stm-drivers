@@ -35,6 +35,58 @@ static HAL_StatusTypeDef ADC_Init_NoDMA_Independent(ADC_HandleTypeDef* hadc){
 	return HAL_ERROR;
 }
 
+/*
+ * @brief Private function that Initialize ADC with DMA support
+ */
+static HAL_StatusTypeDef ADC_Init_DMA(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc){
+
+	// security check
+	if(NULL == hadc || NULL == badc || NULL == hadc->DMA_Handle){
+		return HAL_ERROR;
+	}
+
+	// checking if user turned on correct mode of DMA and ADC's Continuous flag
+	if(ADC_DMA_GetMode(hadc) != DMA_MODE_CIRCULAR || ADC_Continuous(hadc) == DISABLE){
+		return HAL_ERROR;
+	}
+
+	/*
+	 * @brief Checking if dma continuous request is enabled
+	 * @note This flag is only on F3 cores
+	 */
+	#if defined(STM32F3_FAMILY)
+		if(DISABLE == hadc->Init.DMAContinuousRequests){
+			return HAL_ERROR;
+		}
+	#endif
+
+	// launching DMA for ADC
+	if(hadc->Instance == ADC1){
+
+
+		if(HAL_ADC_Start_DMA(hadc, (uint32_t*)badc->adc1Values, ADC1_BUFFER_SIZE) == HAL_OK){
+			return HAL_OK;
+		}
+
+
+	}else if(hadc->Instance == ADC2){
+
+
+		if(HAL_ADC_Start_DMA(hadc, (uint32_t*)badc->adc2Values, ADC2_BUFFER_SIZE) == HAL_OK){
+			return HAL_OK;
+		}
+
+
+	}else{
+
+		// returning error status
+		return HAL_ERROR;
+	}
+
+
+
+	return HAL_ERROR;
+}
 
 /*
  * @brief Private function that reads ADC channels, when there is no DMA support, ADC is in independent mode and ADC converts severals channels
@@ -112,15 +164,16 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent_SingleConversion(ADC_
 
 		// stop ADC before returning error to leave peripheral in known state
 		HAL_ADC_Stop(hadc);
-
 		// when error occurred while polling then error status is returned
 		return HAL_ERROR;
 	}
+
 
 	// Stopping ADC to reset sequencer
 	if(HAL_ADC_Stop(hadc) != HAL_OK){
 		return HAL_ERROR;
 	}
+
 
 	// checking if read value is correct
 	if(tempValue <= ADC_Resolution(hadc)){
@@ -134,6 +187,68 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent_SingleConversion(ADC_
 	}
 
 	// when something went wrong, return error status
+	return HAL_ERROR;
+}
+
+
+/*
+ * @brief Function provides averaging of severals channel's sampled values to provide high efficient measures
+ */
+static HAL_StatusTypeDef ADC_Averaging(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, ADC_BufferTypeDef* badc, uint8_t rank, uint16_t* retval){
+
+	// security check if user correctly configured buffer size
+	if(ADC1_BUFFER_SIZE < 1 || ADC2_BUFFER_SIZE < 1){
+		return HAL_ERROR;
+	}
+
+
+	// init of variable to store sum of measures from one channel
+	uint32_t value = 0;
+
+	// variable stores number of samples
+	uint8_t samples = 0;
+
+	if(hadc->Instance == ADC1){
+
+		// reading ADC1 buffer amount of samples for one channel
+		samples = ADC1_SAMPLING;
+
+
+	}else if(hadc->Instance == ADC2){
+
+		// reading ADC2 buffer amount of samples for one channel
+		samples = ADC2_SAMPLING;
+
+	}else{
+
+		// returning error state when incorrect handle was given
+		return HAL_ERROR;
+	}
+
+
+
+	// summing measures for one channel
+	/*
+	 * @note i increments up to samples, because it defines amount of iterations, for loops need to do to access all samples despite of channel's rank
+	 */
+	for(uint8_t i = 0; i < samples; ++i){
+		value += (hadc->Instance == ADC1) ? badc->adc1Values[(uint8_t)((i * cadc->numberOfSelectedChannels) + rank)] : badc->adc2Values[i * cadc->numberOfSelectedChannels + rank];
+	}
+
+	// calculating averaged value
+	value /= samples;
+
+	// security check, if calculated values in well averaged
+	if(value <= ADC_Resolution(hadc)){
+
+		// assigning calculated value to function's output
+		*retval = value;
+
+		// returning OK status
+		return HAL_OK;
+	}
+
+
 	return HAL_ERROR;
 }
 
@@ -240,10 +355,10 @@ static HAL_StatusTypeDef ADC_ChannelsConfig(ADC_HandleTypeDef* hadc, ADC_Channel
 	return HAL_ERROR;
 }
 
-HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc){
+HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, ADC_BufferTypeDef* badc){
 
 	// checking if user passed null pointer to ADC handle or cadc structure
-	if(NULL == hadc || NULL == cadc){
+	if(NULL == hadc || NULL == cadc || NULL){
 		return HAL_ERROR;
 	}
 
@@ -252,27 +367,44 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* 
 		return HAL_ERROR;
 	}
 
+	if(ADC_DMA_ENABLED(hadc) == DISABLE){
 
-	// Init ADC for correct work mode
-	if(ADC_Discontinuous(hadc) == ENABLE){
+		// Init ADC for correct work mode
+		if(ADC_Discontinuous(hadc) == ENABLE && ADC_Continuous(hadc) == DISABLE){
 
-		// Checking if User made correct config in .ioc file
-		if(ADC_Init_NoDMA_Independent(hadc) != HAL_OK){
+			// Checking if User made correct config in .ioc file
+			if(ADC_Init_NoDMA_Independent(hadc) != HAL_OK){
+				return HAL_ERROR;
+			}
+		}else{
+
+			// when flag for manual mode is not set, then return error
+			return HAL_ERROR;
+		}
+	}else{
+		if(ADC_Init_DMA(hadc, badc) != HAL_OK){
 			return HAL_ERROR;
 		}
 	}
 
+	if(hadc->Instance == ADC1){
 
-	// Enabling clock for ADC1
-	__HAL_RCC_ADC1_CLK_ENABLE();
+		// Enabling clock for ADC1
+		__HAL_RCC_ADC1_CLK_ENABLE();
+
+	}else if(hadc->Instance == ADC2){
+
+		// Enabling clock for ADC2
+		__HAL_RCC_ADC2_CLK_ENABLE();
+	}
 
 	return HAL_OK;
 }
 
 
-HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t channel, uint16_t* retval){
+HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, ADC_BufferTypeDef* badc, uint8_t channel, uint16_t* retval){
 
-	if(hadc == NULL || retval == NULL || cadc == NULL){
+	if(NULL == hadc || NULL == retval  || NULL == cadc || NULL == badc){
 		return HAL_ERROR;
 	}
 
@@ -295,8 +427,8 @@ HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTyp
     	// Executing reading channel for mode without DMA
     	if(ADC_Discontinuous(hadc) == ENABLE){
 
-    		if(ADC_ReadChannel_NoDMA_Independent(hadc, cadc, &rank, retval) != HAL_OK){
-    			return HAL_ERROR;
+    		if(ADC_ReadChannel_NoDMA_Independent(hadc, cadc, &rank, retval) == HAL_OK){
+    			return HAL_OK;
     		}
         // Driver does not support different reading mode without DMA usage, so it returns error
     	}else{
@@ -309,8 +441,8 @@ HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTyp
     		}else{
 
     			// When single conversion is only set, correct read mode is called
-    			if(ADC_ReadChannel_NoDMA_Independent_SingleConversion(hadc, retval) != HAL_OK){
-    				return HAL_ERROR;
+    			if(ADC_ReadChannel_NoDMA_Independent_SingleConversion(hadc, retval) == HAL_OK){
+    				return HAL_OK;
     			}
 
     		}
@@ -318,14 +450,16 @@ HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTyp
     	}
     }else{
 
-    	// For now return error status, cause there is no implementation for reading with DMA support
-        return HAL_ERROR;
+    	// launching averaging function - to calculate ADC's converted value
+    	if(ADC_Averaging(hadc, cadc, badc, rank, retval) == HAL_OK){
+    		return HAL_OK;
+    	}
     }
 
-	return HAL_OK;
+	return HAL_ERROR;
 }
 
-HAL_StatusTypeDef ADC_Get_PinVoltage(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t channel, float* retval){
+HAL_StatusTypeDef ADC_Get_PinVoltage(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, ADC_BufferTypeDef* badc, uint8_t channel, float* retval){
 
 	// checking if user gave null pointers
 	if(NULL == hadc || NULL == retval){
@@ -337,7 +471,7 @@ HAL_StatusTypeDef ADC_Get_PinVoltage(ADC_HandleTypeDef* hadc, ADC_ChannelsConfig
 	float tempValue = 0.0f;
 
 	// Reading channel's sampled value
-	if(ADC_ReadChannel(hadc, cadc, channel, &binaryValue) != HAL_OK){
+	if(ADC_ReadChannel(hadc, cadc, badc, channel, &binaryValue) != HAL_OK){
 		return HAL_ERROR;
 	}
 
