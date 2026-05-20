@@ -56,6 +56,10 @@ Use this mode when you want full software control over each conversion.
 - **Number of Conversions**: Must be equal to the number of active channels.
 - **Rank Configuration**: Each rank must be assigned to a **different channel**.
 
+> [!INFORMATION]
+> While using only one channel, there is no need to set **Discontinuous** flag, moreover \*_STM32CubeMx_ would not allow such a configuration.
+> Driver automatically detects number of channels and effectively switch its security checking logic.
+
 ### Mode II: Automatic/DMA (Continuous Mode)
 
 Use this mode for high-speed, background data collection without CPU intervention.
