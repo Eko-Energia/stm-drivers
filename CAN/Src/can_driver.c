@@ -23,11 +23,6 @@
 #define ERROR_HANDLER_AVAILABLE (0)
 #endif
 
-/**
- * @brief Initialize CAN peripheral
- *
- * @param hcanPtr   Pointer to CAN handle
- */
 void CAN_Init(CAN_HandleTypeDef *hcanPtr)
 {
 	if (HAL_CAN_ActivateNotification(hcanPtr, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
@@ -60,13 +55,6 @@ void CAN_Init(CAN_HandleTypeDef *hcanPtr)
 	}
 }
 
-/**
- * @brief Add new message to the periodic buffer
- *
- * @param msg      Pointer to the message to add
- * @param buffer   Pointer to the buffer that holds messages
- * @retval HAL_StatusTypeDef   State of the operation
- */
 HAL_StatusTypeDef CAN_AddScheduledMsg(const struct CAN_scheduledMsg *msg, struct CAN_scheduledMsgList *buffer)
 {
 	// basic error checking
@@ -97,13 +85,6 @@ HAL_StatusTypeDef CAN_AddScheduledMsg(const struct CAN_scheduledMsg *msg, struct
 	return HAL_OK;
 }
 
-/**
- * @brief Remove message from the periodic buffer
- *
- * @param id       ID of the message to remove
- * @param buffer   Pointer to the buffer that holds messages
- * @retval HAL_StatusTypeDef   State of the operation
- */
 HAL_StatusTypeDef CAN_RemoveScheduledMsg(uint32_t id, struct CAN_scheduledMsgList *buffer)
 {
 	for (uint8_t i = 0; i < buffer->size; i++)
@@ -124,12 +105,6 @@ HAL_StatusTypeDef CAN_RemoveScheduledMsg(uint32_t id, struct CAN_scheduledMsgLis
 	return HAL_ERROR;
 }
 
-/**
- * @brief Process all scheduled CAN messages (call in main loop)
- *
- * @param hcanPtr      Pointer to CAN handle
- * @param scheduler    Pointer to the message scheduler
- */
 void CAN_HandleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList *scheduler)
 {
 	if (hcanPtr == NULL || scheduler == NULL)
@@ -163,4 +138,52 @@ void CAN_HandleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList
 			msg->lastTick = HAL_GetTick();
 		}
 	}
+}
+
+HAL_StatusTypeDef CAN_AddIncomingMessage(struct CAN_IncomingMsgList *buffer, CAN_RxHeaderTypeDef *header, uint8_t *data)
+{
+	if (buffer == NULL)
+	{
+		return HAL_ERROR;
+	}
+
+	if (buffer->count >= CAN_MAX_MSG)
+	{
+		Error_Handler();
+		return HAL_ERROR;
+	}
+
+	struct CAN_IncomingMsg *dst = &buffer->list[buffer->head];
+	dst->header = *header;
+	memcpy(dst->data, data, CAN_MAX_DLC);
+
+	buffer->head = (buffer->head + 1) % CAN_MAX_MSG;
+	buffer->count++;
+	buffer->receiveFlag = 1;
+
+	return HAL_OK;
+}
+
+HAL_StatusTypeDef CAN_GetLatestMessage(struct CAN_IncomingMsgList *buffer, struct CAN_IncomingMsg *msg)
+{
+	if (buffer == NULL || msg == NULL)
+	{
+		return HAL_ERROR;
+	}
+
+	if (buffer->count == 0)
+	{
+		return HAL_ERROR;
+	}
+
+	*msg = buffer->list[buffer->tail];
+	buffer->tail = (buffer->tail + 1) % CAN_MAX_MSG;
+	buffer->count--;
+
+	if (buffer->count == 0)
+	{
+		buffer->receiveFlag = 0;
+	}
+
+	return HAL_OK;
 }
