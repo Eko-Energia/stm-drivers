@@ -17,7 +17,7 @@
  */
 
 #define CAN_MAX_DLC (8)
-#define CAN_MAX_MSG (8)
+#define CAN_MAX_MSG (32)
 
 /**
  * @brief Generic macro to swap endianness based on variable type.~
@@ -120,7 +120,7 @@ void CAN_HandleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList
  * @param buffer   Pointer to the buffer that holds messages
  * @retval HAL_StatusTypeDef   State of the operation
  */
-HAL_StatusTypeDef CAN_AddScheduledMsg(const struct CAN_scheduledMsg *msg, struct CAN_scheduledMsgList *buffer);
+HAL_StatusTypeDef CAN_AddScheduledMsg(struct CAN_scheduledMsg *msg, struct CAN_scheduledMsgList *buffer);
 
 /**
  * @brief Remove message from the periodic buffer
@@ -140,7 +140,7 @@ HAL_StatusTypeDef CAN_RemoveScheduledMsg(uint32_t id, struct CAN_scheduledMsgLis
  * @param data    Pointer to received CAN payload
  * @retval HAL_StatusTypeDef   State of the operation
  */
-HAL_StatusTypeDef CAN_AddIncomingMessage(struct CAN_IncomingMsgList *buffer, CAN_RxHeaderTypeDef *header, uint8_t *data);
+HAL_StatusTypeDef CAN_AddIncomingMsg(struct CAN_IncomingMsgList *buffer, CAN_RxHeaderTypeDef *header, uint8_t *data);
 
 /**
  * @brief Read the oldest incoming CAN message from the FIFO buffer

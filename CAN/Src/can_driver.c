@@ -55,7 +55,7 @@ void CAN_Init(CAN_HandleTypeDef *hcanPtr)
 	}
 }
 
-HAL_StatusTypeDef CAN_AddScheduledMsg(const struct CAN_scheduledMsg *msg, struct CAN_scheduledMsgList *buffer)
+HAL_StatusTypeDef CAN_AddScheduledMsg(struct CAN_scheduledMsg *msg, struct CAN_scheduledMsgList *buffer)
 {
 	// basic error checking
 	if (buffer->size >= CAN_MAX_MSG)
@@ -140,7 +140,7 @@ void CAN_HandleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList
 	}
 }
 
-HAL_StatusTypeDef CAN_AddIncomingMessage(struct CAN_IncomingMsgList *buffer, CAN_RxHeaderTypeDef *header, uint8_t *data)
+HAL_StatusTypeDef CAN_AddIncomingMsg(struct CAN_IncomingMsgList *buffer, CAN_RxHeaderTypeDef *header, uint8_t *data)
 {
 	if (buffer == NULL)
 	{
@@ -149,7 +149,6 @@ HAL_StatusTypeDef CAN_AddIncomingMessage(struct CAN_IncomingMsgList *buffer, CAN
 
 	if (buffer->count >= CAN_MAX_MSG)
 	{
-		Error_Handler();
 		return HAL_ERROR;
 	}
 
