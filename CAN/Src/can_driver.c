@@ -60,11 +60,11 @@ HAL_StatusTypeDef CAN_AddScheduledMsg(struct CAN_scheduledMsg *msg, struct CAN_s
 	// basic error checking
 	if (buffer->size >= CAN_MAX_MSG)
 	{
-		Error_Handler();
+		return HAL_ERROR;
 	}
 	if (msg->periodMs == 0)
 	{
-		Error_Handler();
+		return HAL_ERROR;
 	}
 
 	struct CAN_scheduledMsg tempMsg = *msg;
