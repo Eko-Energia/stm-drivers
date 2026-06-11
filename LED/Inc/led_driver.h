@@ -38,8 +38,9 @@ struct LED{
  * @brief Update the network tick used to synchronize LED blinks.
  * @param tick Network-wide tick in milliseconds (e.g. from a CAN message).
  *
- * Call this whenever a sync tick is received on the CAN bus. All boards
- * sharing the same tick will blink in phase.
+ * Call this whenever a sync tick is received on the CAN bus. The driver
+ * extrapolates time locally between updates so blinking continues on slaves.
+ * Re-call periodically to stay in phase across boards.
  */
 void LED_SetSyncTick(uint32_t tick);
 
