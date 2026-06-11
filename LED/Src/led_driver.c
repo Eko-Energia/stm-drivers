@@ -1,31 +1,41 @@
 #include "led_driver.h"
 
+static uint32_t s_syncTick;
+static uint8_t s_syncTickValid;
+
+static void LED_ApplyBlinkState(struct LED *led, uint32_t interval, uint32_t tick)
+{
+    const uint32_t pos = tick % (2u * interval);
+    const GPIO_PinState pinState = (pos < interval) ? GPIO_PIN_SET : GPIO_PIN_RESET;
+    HAL_GPIO_WritePin(led->GPIO_Port, led->GPIO_Pin, pinState);
+}
+
+void LED_SetSyncTick(uint32_t tick)
+{
+    s_syncTick = tick;
+    s_syncTickValid = 1;
+}
+
 void LED_Handle(struct LED *led)
 {
-    const uint32_t currentTick = HAL_GetTick();
+    const uint32_t tick = s_syncTickValid ? s_syncTick : HAL_GetTick();
     switch(led->state)
     {
         case LED_OFF:
         case LED_ON:
         break;
         case LED_FAST_BLINK:
-            if((currentTick - led->lastTick) >= LED_FAST_BLINK)
-            {
-                HAL_GPIO_TogglePin(led->GPIO_Port, led->GPIO_Pin);
-                led->lastTick = currentTick;
-            }
+            LED_ApplyBlinkState(led, LED_FAST_BLINK, tick);
             break;
         case LED_BLINK:
-            if((currentTick - led->lastTick) >= LED_BLINK)
-            {
-                HAL_GPIO_TogglePin(led->GPIO_Port, led->GPIO_Pin);
-                led->lastTick = currentTick;
-            }
+            LED_ApplyBlinkState(led, LED_BLINK, tick);
+            break;
     }
 }
 
 void LED_ChangeState(struct LED *led, LED_STATE_e state)
 {
+    const uint32_t tick = s_syncTickValid ? s_syncTick : HAL_GetTick();
     led->state = state;
     switch(led->state)
     {
@@ -33,10 +43,13 @@ void LED_ChangeState(struct LED *led, LED_STATE_e state)
             HAL_GPIO_WritePin(led->GPIO_Port, led->GPIO_Pin, GPIO_PIN_RESET);
             break;
         case LED_FAST_BLINK:
+            LED_ApplyBlinkState(led, LED_FAST_BLINK, tick);
+            break;
         case LED_BLINK:
+            LED_ApplyBlinkState(led, LED_BLINK, tick);
+            break;
         case LED_ON:
             HAL_GPIO_WritePin(led->GPIO_Port, led->GPIO_Pin, GPIO_PIN_SET);
-            led->lastTick = HAL_GetTick();
         break;
     }
 }
