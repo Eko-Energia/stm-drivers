@@ -85,8 +85,6 @@ struct CAN_IncomingMsg
 struct CAN_IncomingMsgList
 {
 	struct CAN_IncomingMsg list[CAN_MAX_MSG];
-	uint8_t head;
-	uint8_t tail;
 	uint8_t count;
 	uint8_t receiveFlag;
 };
@@ -135,7 +133,7 @@ HAL_StatusTypeDef CAN_RemoveScheduledMsg(uint32_t id, struct CAN_scheduledMsgLis
 /* Incoming CAN message buffer */
 
 /**
- * @brief Add incoming CAN message to the FIFO buffer
+ * @brief Add incoming CAN message to the buffer
  *
  * @param header  Pointer to received CAN header
  * @param data    Pointer to received CAN payload
@@ -144,7 +142,7 @@ HAL_StatusTypeDef CAN_RemoveScheduledMsg(uint32_t id, struct CAN_scheduledMsgLis
 HAL_StatusTypeDef CAN_AddIncomingMsg(struct CAN_IncomingMsgList *buffer, CAN_RxHeaderTypeDef *header, uint8_t *data);
 
 /**
- * @brief Read the oldest incoming CAN message from the FIFO buffer
+ * @brief Read and remove the pending message with the lowest CAN ID
  *
  * @param msg  Pointer to storage for the received message
  * @retval HAL_StatusTypeDef   State of the operation
