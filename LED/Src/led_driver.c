@@ -9,14 +9,14 @@ void LED_Handle(struct LED *led)
         case LED_ON:
         break;
         case LED_FAST_BLINK:
-            if(led->lastTick + LED_FAST_BLINK < currentTick)
+            if((currentTick - led->lastTick) >= LED_FAST_BLINK)
             {
                 HAL_GPIO_TogglePin(led->GPIO_Port, led->GPIO_Pin);
                 led->lastTick = currentTick;
             }
             break;
         case LED_BLINK:
-            if(led->lastTick + LED_BLINK < currentTick)
+            if((currentTick - led->lastTick) >= LED_BLINK)
             {
                 HAL_GPIO_TogglePin(led->GPIO_Port, led->GPIO_Pin);
                 led->lastTick = currentTick;
