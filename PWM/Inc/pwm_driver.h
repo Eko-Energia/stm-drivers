@@ -22,9 +22,11 @@ struct PWM_IC_signal {
     uint32_t frequency;
     volatile float duty;
     volatile uint32_t icVal;
+    volatile uint32_t icPulseVal; // Add this to store the raw pulse width
+    volatile bool dataReady;      // Add this to signal new data is available
     bool ch1;
     TIM_IC_InitTypeDef sConfigIC;
-	uint32_t clock;
+    uint32_t clock;
 };
 /*
  * PWM out signal
