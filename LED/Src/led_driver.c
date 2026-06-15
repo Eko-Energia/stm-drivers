@@ -1,16 +1,10 @@
 #include "led_driver.h"
 
-static uint32_t s_syncTick;
-static uint32_t s_syncLocalTick;
-static uint8_t s_syncTickValid;
+static uint32_t s_syncTick = 0;
+static uint32_t s_syncLocalTick = 0;
 
 static uint32_t LED_GetBlinkTick(void)
 {
-    if (!s_syncTickValid)
-    {
-        return HAL_GetTick();
-    }
-
     return s_syncTick + (HAL_GetTick() - s_syncLocalTick);
 }
 
@@ -18,7 +12,10 @@ static void LED_ApplyBlinkState(struct LED *led, uint32_t interval, uint32_t tic
 {
     const uint32_t pos = tick % (2u * interval);
     const GPIO_PinState pinState = (pos < interval) ? GPIO_PIN_SET : GPIO_PIN_RESET;
-    HAL_GPIO_WritePin(led->GPIO_Port, led->GPIO_Pin, pinState);
+    if(interval != led->state)
+    {
+        HAL_GPIO_WritePin(led->GPIO_Port, led->GPIO_Pin, pinState);
+    }
 }
 
 void LED_SetSyncTick(uint32_t tick)
