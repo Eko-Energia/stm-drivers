@@ -1,64 +1,62 @@
 #include "led_driver.h"
 
-static uint32_t s_syncTick = 0;
-static uint32_t s_syncLocalTick = 0;
+static uint32_t syncTick = 0;
 
-static uint32_t LED_GetBlinkTick(void)
+void LED_IncSyncTick(void)
 {
-    return s_syncTick + (HAL_GetTick() - s_syncLocalTick);
-}
-
-static void LED_ApplyBlinkState(struct LED *led, uint32_t interval, uint32_t tick)
-{
-    const uint32_t pos = tick % (2u * interval);
-    const GPIO_PinState pinState = (pos < interval) ? GPIO_PIN_SET : GPIO_PIN_RESET;
-    if(interval != led->state)
-    {
-        HAL_GPIO_WritePin(led->GPIO_Port, led->GPIO_Pin, pinState);
-    }
+    syncTick++;
 }
 
 void LED_SetSyncTick(uint32_t tick)
 {
-    s_syncTick = tick;
-    s_syncLocalTick = HAL_GetTick();
-    s_syncTickValid = 1;
+    syncTick = tick;
+}
+
+uint32_t LED_GetSyncTick(void)
+{
+    return syncTick;
+}
+
+static void LED_ApplyBlinkState(struct LED *led, uint32_t interval)
+{
+    const uint32_t pos = syncTick % (2u * interval);
+    const GPIO_PinState pinState = (pos < interval) ? GPIO_PIN_SET : GPIO_PIN_RESET;
+    HAL_GPIO_WritePin(led->GPIO_Port, led->GPIO_Pin, pinState);
 }
 
 void LED_Handle(struct LED *led)
 {
-    const uint32_t tick = LED_GetBlinkTick();
-    switch(led->state)
+    switch (led->state)
     {
         case LED_OFF:
         case LED_ON:
-        break;
+            break;
         case LED_FAST_BLINK:
-            LED_ApplyBlinkState(led, LED_FAST_BLINK, tick);
+            LED_ApplyBlinkState(led, LED_FAST_BLINK);
             break;
         case LED_BLINK:
-            LED_ApplyBlinkState(led, LED_BLINK, tick);
+            LED_ApplyBlinkState(led, LED_BLINK);
             break;
     }
 }
 
 void LED_ChangeState(struct LED *led, LED_STATE_e state)
 {
-    const uint32_t tick = LED_GetBlinkTick();
     led->state = state;
-    switch(led->state)
+
+    switch (led->state)
     {
         case LED_OFF:
             HAL_GPIO_WritePin(led->GPIO_Port, led->GPIO_Pin, GPIO_PIN_RESET);
             break;
         case LED_FAST_BLINK:
-            LED_ApplyBlinkState(led, LED_FAST_BLINK, tick);
+            LED_ApplyBlinkState(led, LED_FAST_BLINK);
             break;
         case LED_BLINK:
-            LED_ApplyBlinkState(led, LED_BLINK, tick);
+            LED_ApplyBlinkState(led, LED_BLINK);
             break;
         case LED_ON:
             HAL_GPIO_WritePin(led->GPIO_Port, led->GPIO_Pin, GPIO_PIN_SET);
-        break;
+            break;
     }
 }
