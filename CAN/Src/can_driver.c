@@ -142,7 +142,7 @@ void CAN_HandleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList
 
 HAL_StatusTypeDef CAN_AddIncomingMsg(struct CAN_IncomingMsgList *buffer, CAN_RxHeaderTypeDef *header, uint8_t *data)
 {
-	if (buffer == NULL)
+	if (buffer == NULL || header == NULL || data == NULL)
 	{
 		return HAL_ERROR;
 	}
