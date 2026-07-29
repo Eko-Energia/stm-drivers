@@ -140,16 +140,6 @@ void CAN_HandleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList
 	}
 }
 
-static uint32_t CAN_GetIncomingMsgId(const CAN_RxHeaderTypeDef *header)
-{
-	if (header->IDE == CAN_ID_STD)
-	{
-		return header->StdId;
-	}
-
-	return header->ExtId;
-}
-
 HAL_StatusTypeDef CAN_AddIncomingMsg(struct CAN_IncomingMsgList *buffer, CAN_RxHeaderTypeDef *header, uint8_t *data)
 {
 	if (buffer == NULL || header == NULL || data == NULL)
@@ -162,10 +152,11 @@ HAL_StatusTypeDef CAN_AddIncomingMsg(struct CAN_IncomingMsgList *buffer, CAN_RxH
 		return HAL_ERROR;
 	}
 
-	struct CAN_IncomingMsg *dst = &buffer->list[buffer->count];
+	struct CAN_IncomingMsg *dst = &buffer->list[buffer->head];
 	dst->header = *header;
 	memcpy(dst->data, data, CAN_MAX_DLC);
 
+	buffer->head = (buffer->head + 1) % CAN_MAX_MSG;
 	buffer->count++;
 	buffer->receiveFlag = 1;
 
@@ -184,21 +175,8 @@ HAL_StatusTypeDef CAN_GetLatestMessage(struct CAN_IncomingMsgList *buffer, struc
 		return HAL_ERROR;
 	}
 
-	uint8_t lowestIdx = 0;
-	uint32_t lowestId = CAN_GetIncomingMsgId(&buffer->list[0].header);
-
-	for (uint8_t i = 1; i < buffer->count; i++)
-	{
-		uint32_t id = CAN_GetIncomingMsgId(&buffer->list[i].header);
-		if (id < lowestId)
-		{
-			lowestId = id;
-			lowestIdx = i;
-		}
-	}
-
-	*msg = buffer->list[lowestIdx];
-	buffer->list[lowestIdx] = buffer->list[buffer->count - 1];
+	*msg = buffer->list[buffer->tail];
+	buffer->tail = (buffer->tail + 1) % CAN_MAX_MSG;
 	buffer->count--;
 
 	if (buffer->count == 0)
