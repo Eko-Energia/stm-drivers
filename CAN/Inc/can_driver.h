@@ -87,6 +87,8 @@ struct CAN_IncomingMsgList
 	struct CAN_IncomingMsg list[CAN_MAX_MSG];
 	uint8_t count;
 	uint8_t receiveFlag;
+	uint8_t head;
+	uint8_t tail;
 };
 
 /**
