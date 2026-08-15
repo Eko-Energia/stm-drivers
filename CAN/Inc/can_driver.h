@@ -8,8 +8,10 @@
 #ifndef CAN_DRIVER_H
 #define CAN_DRIVER_H
 
+#include "can_conf.h"
 #include "can_id_list.h"
 #include "main.h"
+#include <stdint.h>
 #include <stdio.h>
 #include "string.h"
 
@@ -58,6 +60,7 @@ struct CAN_scheduledMsg
 	uint32_t lastTick;              // time stamp of the last message
 	void (*getData)(uint8_t *data, void *context); // fetches data
 	void *context;                  // user callback context
+	uint8_t txFailCount;            // consecutive failed enqueue attempts, managed by the driver
 };
 
 /**
