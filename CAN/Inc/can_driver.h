@@ -21,6 +21,28 @@
 #define CAN_MAX_MSG (32)
 
 /**
+ * Automatic retransmission (bxCAN NART bit), applied by CAN_Init().
+ *
+ * 1 = enabled (default) - the peripheral retries a frame that lost arbitration
+ *                         or hit a bus error until it is acknowledged.
+ * 0 = disabled          - a frame is transmitted once; a failed frame is dropped
+ *                         and its mailbox is released immediately.
+ *
+ * @note With retransmission enabled a frame that is never acknowledged (no other
+ * node on the bus, missing termination, bit timing mismatch) occupies its mailbox
+ * indefinitely. bxCAN has only 3 TX mailboxes, so three such frames block every
+ * further transmission. CAN_HandleScheduled() recovers via CAN_TX_FAIL_LIMIT.
+ */
+#define CAN_AUTO_RETRANSMISSION (1U)
+
+/**
+ * Consecutive failed enqueue attempts of a single scheduled message before
+ * CAN_HandleScheduled() aborts all pending TX requests to unblock the mailboxes.
+ * Counts periods, not loop iterations. Set to 0 to disable the recovery.
+ */
+#define CAN_TX_FAIL_LIMIT (3U)
+
+/**
  * @brief Generic macro to swap endianness based on variable type.~
  * 
  * Endiannes should be handlend in GetData function of every 
@@ -58,6 +80,7 @@ struct CAN_scheduledMsg
 	uint32_t lastTick;              // time stamp of the last message
 	void (*getData)(uint8_t *data, void *context); // fetches data
 	void *context;                  // user callback context
+	uint32_t txFailCount;           // consecutive failed enqueue attempts, managed by the driver
 };
 
 /**

@@ -49,6 +49,21 @@ void CAN_Init(CAN_HandleTypeDef *hcanPtr)
 		Error_Handler();
 	}
 
+	/*
+	 * Apply the configured transmission policy. NART is only writable while the
+	 * peripheral is still in initialisation mode, i.e. after HAL_CAN_Init() and
+	 * before the HAL_CAN_Start() below, so this has to stay in this order.
+	 * Init.AutoRetransmission is kept in sync so a later HAL_CAN_Init() does not
+	 * silently revert the setting.
+	 */
+#if (CAN_AUTO_RETRANSMISSION != 0U)
+	CLEAR_BIT(hcanPtr->Instance->MCR, CAN_MCR_NART);
+	hcanPtr->Init.AutoRetransmission = ENABLE;
+#else
+	SET_BIT(hcanPtr->Instance->MCR, CAN_MCR_NART);
+	hcanPtr->Init.AutoRetransmission = DISABLE;
+#endif
+
 	if (HAL_CAN_Start(hcanPtr) != HAL_OK)
 	{
 		Error_Handler();
@@ -69,6 +84,7 @@ HAL_StatusTypeDef CAN_AddScheduledMsg(struct CAN_scheduledMsg *msg, struct CAN_s
 
 	struct CAN_scheduledMsg tempMsg = *msg;
 	tempMsg.lastTick = HAL_GetTick();
+	tempMsg.txFailCount = 0;
 
 	// check if id already exists in the buffer
 	for (uint8_t i = 0; i < buffer->size; i++)
@@ -116,7 +132,8 @@ void CAN_HandleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList
 	for (uint8_t i = 0; i < scheduler->size; i++)
 	{
 		struct CAN_scheduledMsg *msg = &scheduler->list[i];
-		if (currentTick > msg->lastTick + msg->periodMs)
+		// unsigned difference stays correct across the HAL_GetTick() wrap
+		if ((currentTick - msg->lastTick) >= msg->periodMs)
 		{
 			uint8_t data[CAN_MAX_DLC];
 			// Initialize data to 0 to be safe
@@ -132,10 +149,52 @@ void CAN_HandleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList
 			
 			if (HAL_CAN_AddTxMessage(hcanPtr, &msg->header, data, &scheduler->txMailbox) != HAL_OK)
 			{
-				return;
+				/*
+				 * No free mailbox, or the peripheral is not ready. Re-arm so this
+				 * message waits a full period before trying again - leaving
+				 * lastTick stale would make the branch above true on every main
+				 * loop iteration and turn the period into a busy retry. Skip only
+				 * this message, so one blocked frame cannot starve the rest.
+				 */
+				msg->lastTick = currentTick;
+
+				// saturate rather than wrap, so CAN_TX_FAIL_LIMIT stays
+				// usable over its whole range instead of being capped by the
+				// width of the counter
+				if (msg->txFailCount < UINT32_MAX)
+				{
+					msg->txFailCount++;
+				}
+
+				/*
+				 * All three mailboxes stuck for several periods in a row. With
+				 * automatic retransmission enabled an unacknowledged frame is
+				 * retried forever and never releases its mailbox, so drop the
+				 * pending requests to let the queue drain. On a mailbox that is
+				 * mid-transmission the abort takes effect at the end of the
+				 * current attempt.
+				 */
+				if ((CAN_TX_FAIL_LIMIT != 0U) && (msg->txFailCount >= CAN_TX_FAIL_LIMIT))
+				{
+					HAL_CAN_AbortTxRequest(hcanPtr, CAN_TX_MAILBOX0 | CAN_TX_MAILBOX1 | CAN_TX_MAILBOX2);
+					msg->txFailCount = 0;
+				}
+
+				continue;
 			}
 
-			msg->lastTick = HAL_GetTick();
+			msg->txFailCount = 0;
+
+			/*
+			 * Advance by whole periods so the cadence does not drift with the
+			 * execution time of the send, and resynchronise if we fell more than
+			 * one period behind, to avoid a catch-up burst after a long stall.
+			 */
+			msg->lastTick += msg->periodMs;
+			if ((currentTick - msg->lastTick) >= msg->periodMs)
+			{
+				msg->lastTick = currentTick;
+			}
 		}
 	}
 }
