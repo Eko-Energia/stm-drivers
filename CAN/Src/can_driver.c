@@ -158,7 +158,10 @@ void CAN_HandleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList
 				 */
 				msg->lastTick = currentTick;
 
-				if (msg->txFailCount < UINT8_MAX)
+				// saturate rather than wrap, so CAN_CONF_TX_FAIL_LIMIT stays
+				// usable over its whole range instead of being capped by the
+				// width of the counter
+				if (msg->txFailCount < UINT32_MAX)
 				{
 					msg->txFailCount++;
 				}

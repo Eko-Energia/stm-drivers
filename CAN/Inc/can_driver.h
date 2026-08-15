@@ -60,7 +60,7 @@ struct CAN_scheduledMsg
 	uint32_t lastTick;              // time stamp of the last message
 	void (*getData)(uint8_t *data, void *context); // fetches data
 	void *context;                  // user callback context
-	uint8_t txFailCount;            // consecutive failed enqueue attempts, managed by the driver
+	uint32_t txFailCount;           // consecutive failed enqueue attempts, managed by the driver
 };
 
 /**
