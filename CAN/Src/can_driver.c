@@ -56,7 +56,7 @@ void CAN_Init(CAN_HandleTypeDef *hcanPtr)
 	 * Init.AutoRetransmission is kept in sync so a later HAL_CAN_Init() does not
 	 * silently revert the setting.
 	 */
-#if (CAN_CONF_AUTO_RETRANSMISSION != 0U)
+#if (CAN_AUTO_RETRANSMISSION != 0U)
 	CLEAR_BIT(hcanPtr->Instance->MCR, CAN_MCR_NART);
 	hcanPtr->Init.AutoRetransmission = ENABLE;
 #else
@@ -158,7 +158,7 @@ void CAN_HandleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList
 				 */
 				msg->lastTick = currentTick;
 
-				// saturate rather than wrap, so CAN_CONF_TX_FAIL_LIMIT stays
+				// saturate rather than wrap, so CAN_TX_FAIL_LIMIT stays
 				// usable over its whole range instead of being capped by the
 				// width of the counter
 				if (msg->txFailCount < UINT32_MAX)
@@ -174,7 +174,7 @@ void CAN_HandleScheduled(CAN_HandleTypeDef *hcanPtr, struct CAN_scheduledMsgList
 				 * mid-transmission the abort takes effect at the end of the
 				 * current attempt.
 				 */
-				if ((CAN_CONF_TX_FAIL_LIMIT != 0U) && (msg->txFailCount >= CAN_CONF_TX_FAIL_LIMIT))
+				if ((CAN_TX_FAIL_LIMIT != 0U) && (msg->txFailCount >= CAN_TX_FAIL_LIMIT))
 				{
 					HAL_CAN_AbortTxRequest(hcanPtr, CAN_TX_MAILBOX0 | CAN_TX_MAILBOX1 | CAN_TX_MAILBOX2);
 					msg->txFailCount = 0;
